@@ -1,0 +1,46 @@
+import axios from 'axios';
+
+// Update this URL to match your Laragon setup
+// For local development, use your machine's IP address or localhost
+export const API_BASE_URL = 'http://localhost/msu-attendance-api';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+// Add request interceptor for auth token
+api.interceptors.request.use(
+  (config) => {
+    // You can add auth token here if needed
+    // const token = await AsyncStorage.getItem('token');
+    // if (token) {
+    //   config.headers.Authorization = `Bearer ${token}`;
+    // }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // Server responded with error status
+      console.error('API Error:', error.response.data);
+    } else if (error.request) {
+      // Request made but no response
+      console.error('Network Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
