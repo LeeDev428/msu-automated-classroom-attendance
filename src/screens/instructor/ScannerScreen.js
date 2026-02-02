@@ -5,12 +5,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import api from '../../config/api';
+
+// Only import camera on native platforms
+let Camera, BarCodeScanner;
+if (Platform.OS !== 'web') {
+  Camera = require('expo-camera').Camera;
+  BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+}
 
 export default function ScannerScreen() {
   const [hasPermission, setHasPermission] = useState(null);
@@ -19,6 +25,10 @@ export default function ScannerScreen() {
 
   useEffect(() => {
     (async () => {
+      if (Platform.OS === 'web') {
+        setHasPermission(false);
+        return;
+      }
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
@@ -81,9 +91,26 @@ export default function ScannerScreen() {
     return (
       <View style={styles.container}>
         <Ionicons name="camera-off" size={64} color={COLORS.gray} />
-        <Text style={styles.errorText}>No access to camera</Text>
+        <Text style={styles.errorText}>
+          {Platform.OS === 'web' ? 'Web Camera Not Supported' : 'No access to camera'}
+        </Text>
         <Text style={styles.errorSubtext}>
-          Please grant camera permission to scan QR codes
+          {Platform.OS === 'web' 
+            ? 'QR Scanner requires a physical device. Please use Expo Go on your phone or Android/iOS emulator.'
+            : 'Please grant camera permission to scan QR codes'}
+        </Text>
+      </View>
+    );
+  }
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <Ionicons name="phone-portrait-outline" size={64} color={COLORS.primary} />
+        <Text style={styles.errorText}>Use Mobile Device</Text>
+        <Text style={styles.errorSubtext}>
+          QR Code scanning is only available on mobile devices.{'\n'}
+          Please scan the QR code with Expo Go app on your phone.
         </Text>
       </View>
     );
