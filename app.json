@@ -31,7 +31,8 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
@@ -40,6 +41,7 @@
           "cameraPermission": "Allow MSU Attendance to access your camera for QR code scanning."
         }
       ]
-    ]
+    ],
+    "jsEngine": "jsc"
   }
 }
