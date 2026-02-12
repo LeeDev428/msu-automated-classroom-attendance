@@ -1,66 +1,60 @@
 <?php
-// backend/auth/login.php
-// Handle instructor login
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-include_once '../config/cors.php';
-include_once '../config/database.php';
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once '../core/Database.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 
-$response = array();
-
-try {
-    if (!empty($data->email) && !empty($data->password) && !empty($data->role)) {
-        $query = "SELECT id, name, email, password, role, department, employee_id 
-                 FROM users 
-                 WHERE email = :email AND role = :role";
-
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(":email", $data->email);
-        $stmt->bindParam(":role", $data->role);
-        $stmt->execute();
-
-        if ($stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Verify password
-            if (password_verify($data->password, $row['password'])) {
-                http_response_code(200);
-                $response['success'] = true;
-                $response['message'] = "Login successful";
-                $response['user'] = array(
-                    'id' => $row['id'],
-                    'name' => $row['name'],
-                    'email' => $row['email'],
-                    'role' => $row['role'],
-                    'department' => $row['department'],
-                    'employee_id' => $row['employee_id']
-                );
-                // In production, generate and return JWT token here
-                $response['token'] = base64_encode($row['id'] . ":" . time());
-            } else {
-                http_response_code(401);
-                $response['success'] = false;
-                $response['message'] = "Invalid password";
-            }
-        } else {
-            http_response_code(401);
-            $response['success'] = false;
-            $response['message'] = "User not found";
-        }
-    } else {
-        http_response_code(400);
-        $response['success'] = false;
-        $response['message'] = "Email, password, and role are required";
-    }
-} catch (Exception $e) {
-    http_response_code(500);
-    $response['success'] = false;
-    $response['message'] = "Server error: " . $e->getMessage();
+if (!$data || empty($data->email) || empty($data->password)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Email and password required']);
+    exit();
 }
 
-echo json_encode($response);
+try {
+    $stmt = $db->prepare("SELECT id, name, email, password, role, department, employee_id FROM users WHERE email = ?");
+    $stmt->execute([$data->email]);
+    
+    if ($stmt->rowCount() === 0) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'User not found']);
+        exit();
+    }
+    
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!password_verify($data->password, $user['password'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Invalid password']);
+        exit();
+    }
+    
+    // Success
+    unset($user['password']);
+    $token = base64_encode($user['id'] . ':' . time());
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Login successful',
+        'data' => [
+            'user' => $user,
+            'token' => $token
+        ]
+    ]);
+    
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
 ?>
