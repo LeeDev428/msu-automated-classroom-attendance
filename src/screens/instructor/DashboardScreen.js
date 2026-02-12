@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,29 +6,70 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
+import api from '../../config/api';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen({ navigation }) {
-  // Mock data - will be replaced with API data
-  const dashboardData = {
-    instructorName: 'Prof. Rodriguez',
-    date: 'Monday, December 15, 2025',
-    enrolledStudents: 156,
-    enrolledClasses: 4,
-    presentToday: 142,
-    presentChange: '+8 from yesterday',
-    absentToday: 14,
-    absentNote: '3 late check-in',
-    attendanceRate: 91,
-    attendanceStatus: 'Above target',
-    todayAttendanceRate: 84,
-    todayTarget: 'Target: 85% minimum',
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    instructorName: 'Loading...',
+    date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+    enrolledStudents: 0,
+    enrolledClasses: 0,
+    presentToday: 0,
+    absentToday: 0,
+    attendanceRate: 0,
+  });
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await api.get('/dashboard/stats.php', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setDashboardData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Dashboard fetch error:', error);
+      // Use stored user data as fallback
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setDashboardData(prev => ({ ...prev, instructorName: user.name || 'Instructor' }));
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData();
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -48,7 +89,13 @@ export default function DashboardScreen({ navigation }) {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+        }
+      >
         {/* Dashboard Title */}
         <View style={styles.titleSection}>
           <View style={styles.titleRow}>
