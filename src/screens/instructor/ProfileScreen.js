@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,22 +7,51 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
+import api from '../../config/api';
 
 export default function ProfileScreen({ navigation }) {
-  const instructorData = {
-    name: 'Prof. Rodriguez',
-    email: 'rodriguez@example.com',
-    department: 'Computer Science',
-    employeeId: 'EMP-2024-001',
-    phone: '+63 912 345 6789',
-    joinDate: 'January 2024',
+  const [loading, setLoading] = useState(true);
+  const [instructorData, setInstructorData] = useState({
+    name: 'Loading...',
+    email: '',
+    department: '',
+    employee_id: '',
+    created_at: '',
+  });
+
+  const fetchProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await api.get('/profile/index.php', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setInstructorData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      // Use stored user data as fallback
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        setInstructorData(JSON.parse(userData));
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLogout = () => {
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleLogout = async () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -33,8 +62,9 @@ export default function ProfileScreen({ navigation }) {
         },
         {
           text: 'Logout',
-          onPress: () => {
-            // Navigate back to landing screen
+          onPress: async () => {
+            await AsyncStorage.removeItem('authToken');
+            await AsyncStorage.removeItem('userData');
             navigation.reset({
               index: 0,
               routes: [{ name: 'Landing' }],
@@ -44,6 +74,19 @@ export default function ProfileScreen({ navigation }) {
         },
       ]
     );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   return (
@@ -56,7 +99,7 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.profileImageContainer}>
           <View style={styles.profileImage}>
             <Text style={styles.profileInitials}>
-              {instructorData.name.split(' ').map(n => n[0]).join('')}
+              {getInitials(instructorData.name)}
             </Text>
           </View>
         </View>
