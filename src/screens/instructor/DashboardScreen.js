@@ -39,7 +39,7 @@ export default function DashboardScreen({ navigation }) {
       >
         <View style={styles.headerContent}>
           <View>
-            <Text style={styles.universityName}>MSU-MAGUINDANAO</Text>
+            <Text style={styles.universityName}>Automated Classroom Attendance</Text>
             <Text style={styles.instructorName}>{dashboardData.instructorName}</Text>
           </View>
           <TouchableOpacity style={styles.menuButton}>
