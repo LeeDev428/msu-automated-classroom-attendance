@@ -7,11 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Modal,
   ActivityIndicator,
   RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,17 +21,6 @@ export default function ClassesScreen({ navigation }) {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newClass, setNewClass] = useState({
-    class_name: '',
-    class_code: '',
-    section: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    days: '',
-    room: ''
-  });
 
   const fetchClasses = async () => {
     try {
