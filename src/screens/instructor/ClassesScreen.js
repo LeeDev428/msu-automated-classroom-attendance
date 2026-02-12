@@ -41,8 +41,11 @@ export default function ClassesScreen({ navigation }) {
   };
 
   useEffect(() => {
-    fetchClasses();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchClasses();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -85,110 +88,6 @@ export default function ClassesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Add Class Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalOverlay}>
-            <ScrollView 
-              contentContainerStyle={styles.modalScrollContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <View style={styles.modalIconContainer}>
-                    <Ionicons name="book" size={28} color={COLORS.white} />
-                  </View>
-                </View>
-                <Text style={styles.modalTitle}>Add New Class</Text>
-                
-                <Text style={styles.fieldLabel}>Class Name *</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="e.g., Mathematics 101"
-                  placeholderTextColor={COLORS.gray}
-                  value={newClass.class_name}
-                  onChangeText={(text) => setNewClass({...newClass, class_name: text})}
-                />
-                
-                <Text style={styles.fieldLabel}>Class Code *</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="e.g., MATH-101"
-                  placeholderTextColor={COLORS.gray}
-                  value={newClass.class_code}
-                  onChangeText={(text) => setNewClass({...newClass, class_code: text})}
-                />
-                
-                <Text style={styles.fieldLabel}>Section *</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="e.g., Grade 10 - Diamond"
-                  placeholderTextColor={COLORS.gray}
-                  value={newClass.section}
-                  onChangeText={(text) => setNewClass({...newClass, section: text})}
-                />
-                
-                <Text style={styles.fieldLabel}>Description (Optional)</Text>
-                <TextInput
-                  style={[styles.modalInput, styles.textArea]}
-                  placeholder="Brief description of the class..."
-                  placeholderTextColor={COLORS.gray}
-                  multiline
-                  numberOfLines={3}
-                  value={newClass.description}
-                  onChangeText={(text) => setNewClass({...newClass, description: text})}
-                />
-                
-                <Text style={styles.fieldLabel}>Start Time *</Text>
-                <View style={styles.timeInputContainer}>
-                  <Ionicons name="time-outline" size={20} color={COLORS.gray} />
-                  <TextInput
-                    style={styles.timeInput}
-                    placeholder="--:-- --"
-                    placeholderTextColor={COLORS.gray}
-                    value={newClass.start_time}
-                    onChangeText={(text) => setNewClass({...newClass, start_time: text})}
-                  />
-                </View>
-                
-                <Text style={styles.fieldLabel}>End Time *</Text>
-                <View style={styles.timeInputContainer}>
-                  <Ionicons name="time-outline" size={20} color={COLORS.gray} />
-                  <TextInput
-                    style={styles.timeInput}
-                    placeholder="--:-- --"
-                    placeholderTextColor={COLORS.gray}
-                    value={newClass.end_time}
-                    onChangeText={(text) => setNewClass({...newClass, end_time: text})}
-                  />
-                </View>
-                
-                <Text style={styles.fieldLabel}>Days *</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="e.g., Monday, Wednesday, Friday"
-                  placeholderTextColor={COLORS.gray}
-                  value={newClass.days}
-                  onChangeText={(text) => setNewClass({...newClass, days: text})}
-                />
-                
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.saveButton} onPress={handleAddClass}>
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
       {/* Header */}
       <LinearGradient
         colors={[COLORS.primary, COLORS.primaryDark]}
@@ -216,7 +115,7 @@ export default function ClassesScreen({ navigation }) {
         </View>
 
         {/* Add Class Button */}
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddClass')}>
           <Ionicons name="add-circle" size={24} color={COLORS.white} />
           <Text style={styles.addButtonText}>Add New Class</Text>
         </TouchableOpacity>
@@ -252,12 +151,28 @@ const ClassCard = ({ classData, onDelete }) => {
     return COLORS.error;
   };
 
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const scheduleDisplay = classData.days && classData.start_time && classData.end_time
+    ? `${classData.days} • ${formatTime(classData.start_time)} - ${formatTime(classData.end_time)}`
+    : 'No schedule set';
+
   return (
     <TouchableOpacity style={styles.classCard}>
       <View style={styles.classCardHeader}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.classCode}>{classData.class_code}</Text>
           <Text style={styles.className}>{classData.class_name}</Text>
+          {classData.section && (
+            <Text style={styles.sectionText}>{classData.section}</Text>
+          )}
         </View>
         <TouchableOpacity onPress={onDelete}>
           <Ionicons name="trash-outline" size={24} color={COLORS.error} />
@@ -267,8 +182,14 @@ const ClassCard = ({ classData, onDelete }) => {
       <View style={styles.classCardBody}>
         <View style={styles.scheduleContainer}>
           <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
-          <Text style={styles.scheduleText}>{classData.schedule || 'No schedule set'}</Text>
+          <Text style={styles.scheduleText}>{scheduleDisplay}</Text>
         </View>
+        {classData.room && (
+          <View style={styles.scheduleContainer}>
+            <Ionicons name="location-outline" size={16} color={COLORS.textSecondary} />
+            <Text style={styles.scheduleText}>{classData.room}</Text>
+          </View>
+        )}
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -409,6 +330,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
+  sectionText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
   classCardBody: {
     marginBottom: 12,
   },
@@ -472,110 +398,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     marginTop: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 24,
-    width: '90%',
-    maxWidth: 450,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#8B0000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-    marginBottom: 12,
-    backgroundColor: COLORS.white,
-    color: COLORS.textPrimary,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  timeInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 12,
-    backgroundColor: COLORS.white,
-  },
-  timeInput: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 10,
-    color: COLORS.textPrimary,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginRight: 8,
-  },
-  cancelButtonText: {
-    textAlign: 'center',
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-  },
-  saveButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: COLORS.primary,
-    marginLeft: 8,
-  },
-  saveButtonText: {
-    textAlign: 'center',
-    color: COLORS.white,
-    fontWeight: '600',
   },
 });
