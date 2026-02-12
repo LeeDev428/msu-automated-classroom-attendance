@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Update this URL to match your Laragon setup
-// For local development, use your machine's IP address or localhost
-export const API_BASE_URL = 'http://192.168.0.31';
+// For local development, use: http://localhost/msu-attendance-api
+// For physical device testing, use your machine's IP address
+export const API_BASE_URL = 'http://localhost/msu-attendance-api';
 
 // Create axios instance with default config
 const api = axios.create({
