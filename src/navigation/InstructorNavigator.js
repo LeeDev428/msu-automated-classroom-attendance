@@ -1,17 +1,19 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
 
 // Screens
 import DashboardScreen from '../screens/instructor/DashboardScreen';
-// import ScannerScreen from '../screens/instructor/ScannerScreen'; // Disabled for now
 import ClassesScreen from '../screens/instructor/ClassesScreen';
 import ProfileScreen from '../screens/instructor/ProfileScreen';
+import AddClassScreen from '../screens/instructor/AddClassScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
-export default function InstructorNavigator() {
+function InstructorTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -57,13 +59,6 @@ export default function InstructorNavigator() {
           tabBarLabel: 'Dashboard',
         }}
       />
-      {/* <Tab.Screen 
-        name="Scanner" 
-        component={ScannerScreen}
-        options={{
-          tabBarLabel: 'Scanner',
-        }}
-      /> */}
       <Tab.Screen 
         name="Classes" 
         component={ClassesScreen}
@@ -79,5 +74,14 @@ export default function InstructorNavigator() {
         }}
       />
     </Tab.Navigator>
+  );
+}
+
+export default function InstructorNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="InstructorTabs" component={InstructorTabs} />
+      <Stack.Screen name="AddClass" component={AddClassScreen} />
+    </Stack.Navigator>
   );
 }
