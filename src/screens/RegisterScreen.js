@@ -55,9 +55,12 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/register.php', {
-        ...formData,
-        role: 'instructor'
+      const response = await api.post('/modules/instructor/auth/register.php', {
+        name: formData.fullName,
+        email: formData.email,
+        department: formData.department,
+        employee_id: formData.employeeId,
+        password: formData.password
       });
 
       if (response.data.success) {
@@ -75,11 +78,16 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert('Registration Failed', response.data.message || 'Please try again');
       }
     } catch (error) {
-      Alert.alert(
-        'Connection Error',
-        'Unable to connect to server. Please check if backend is running.'
-      );
-      console.error('Register error:', error);
+      const errorMessage = error.response?.data?.message || 'Unable to connect to server. Please check if backend is running.';
+      const errors = error.response?.data?.errors;
+      
+      if (errors) {
+        const errorText = Object.values(errors).join('\n');
+        Alert.alert('Validation Error', errorText);
+      } else {
+        Alert.alert('Registration Error', errorMessage);
+      }
+      console.error('Register error:', error.response?.data || error);
     } finally {
       setLoading(false);
     }
