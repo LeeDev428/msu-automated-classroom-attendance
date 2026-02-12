@@ -316,21 +316,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: {
+    width: 90,
+    height: 90,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.primary,
   },
   universityText: {
     fontSize: 16,
