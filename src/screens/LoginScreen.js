@@ -31,11 +31,6 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    if (!email.includes('@msuiit.edu.ph')) {
-      Alert.alert('Error', 'Please use your institutional email (@msuiit.edu.ph)');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -76,10 +71,9 @@ export default function LoginScreen({ navigation }) {
           {/* Header Section */}
           <View style={styles.header}>
             <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>MSU</Text>
+              <Text style={styles.logoText}>ACA</Text>
             </View>
-            <Text style={styles.universityText}>MSU-MAGUINDANAO</Text>
-            <Text style={styles.systemText}>Automated Classroom Attendance</Text>
+            <Text style={styles.universityText}>Automated Classroom Attendance</Text>
             <Text style={styles.subtitleText}>QR Code Monitoring System</Text>
           </View>
 
@@ -90,14 +84,14 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.portalText}>SECURE INSTRUCTOR PORTAL</Text>
             </View>
 
-            {/* Institutional Email */}
+            {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Institutional Email *</Text>
+              <Text style={styles.label}>Email *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color={COLORS.gray} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="instructor@msuiit.edu.ph"
+                  placeholder="instructor@example.com"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
