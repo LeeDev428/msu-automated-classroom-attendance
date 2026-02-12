@@ -193,7 +193,7 @@ export default function ClassesScreen({ navigation }) {
         </View>
 
         {/* Add Class Button */}
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
           <Ionicons name="add-circle" size={24} color={COLORS.white} />
           <Text style={styles.addButtonText}>Add New Class</Text>
         </TouchableOpacity>
@@ -202,9 +202,12 @@ export default function ClassesScreen({ navigation }) {
         <ScrollView 
           style={styles.classList}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+          }
         >
           {filteredClasses.map((cls) => (
-            <ClassCard key={cls.id} classData={cls} />
+            <ClassCard key={cls.id} classData={cls} onDelete={() => handleDeleteClass(cls.id)} />
           ))}
 
           {filteredClasses.length === 0 && (
@@ -219,7 +222,7 @@ export default function ClassesScreen({ navigation }) {
   );
 }
 
-const ClassCard = ({ classData }) => {
+const ClassCard = ({ classData, onDelete }) => {
   const getAttendanceColor = (rate) => {
     if (rate >= 90) return COLORS.success;
     if (rate >= 75) return COLORS.warning;
@@ -230,35 +233,37 @@ const ClassCard = ({ classData }) => {
     <TouchableOpacity style={styles.classCard}>
       <View style={styles.classCardHeader}>
         <View>
-          <Text style={styles.classCode}>{classData.id}</Text>
-          <Text style={styles.className}>{classData.name}</Text>
+          <Text style={styles.classCode}>{classData.class_code}</Text>
+          <Text style={styles.className}>{classData.class_name}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={COLORS.gray} />
+        <TouchableOpacity onPress={onDelete}>
+          <Ionicons name="trash-outline" size={24} color={COLORS.error} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.classCardBody}>
         <View style={styles.scheduleContainer}>
           <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
-          <Text style={styles.scheduleText}>{classData.schedule}</Text>
+          <Text style={styles.scheduleText}>{classData.schedule || 'No schedule set'}</Text>
         </View>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Ionicons name="people" size={18} color={COLORS.info} />
-            <Text style={styles.statValue}>{classData.enrolled}</Text>
+            <Text style={styles.statValue}>{classData.enrolled || 0}</Text>
             <Text style={styles.statLabel}>Enrolled</Text>
           </View>
 
           <View style={styles.statItem}>
             <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
-            <Text style={styles.statValue}>{classData.present}</Text>
+            <Text style={styles.statValue}>{classData.present_today || 0}</Text>
             <Text style={styles.statLabel}>Present</Text>
           </View>
 
           <View style={styles.statItem}>
-            <Ionicons name="trending-up" size={18} color={getAttendanceColor(classData.attendanceRate)} />
-            <Text style={[styles.statValue, { color: getAttendanceColor(classData.attendanceRate) }]}>
-              {classData.attendanceRate}%
+            <Ionicons name="trending-up" size={18} color={getAttendanceColor(classData.attendanceRate || 0)} />
+            <Text style={[styles.statValue, { color: getAttendanceColor(classData.attendanceRate || 0) }]}>
+              {classData.attendanceRate || 0}%
             </Text>
             <Text style={styles.statLabel}>Rate</Text>
           </View>
@@ -444,5 +449,63 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     marginTop: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    textAlign: 'center',
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    marginLeft: 8,
+  },
+  saveButtonText: {
+    textAlign: 'center',
+    color: COLORS.white,
+    fontWeight: '600',
   },
 });
