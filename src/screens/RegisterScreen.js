@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -139,9 +140,11 @@ export default function RegisterScreen({ navigation }) {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>ACA</Text>
-            </View>
+            <Image
+              source={require('../../assets/images/Automated-Classroom-Attendance-Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.universityText}>Automated Classroom Attendance</Text>
             <Text style={styles.titleText}>Instructor Registration</Text>
           </View>
