@@ -10,6 +10,8 @@ import {
   Modal,
   ActivityIndicator,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,7 +29,10 @@ export default function ClassesScreen({ navigation }) {
     class_name: '',
     class_code: '',
     section: '',
-    schedule: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    days: '',
     room: ''
   });
 
@@ -59,21 +64,33 @@ export default function ClassesScreen({ navigation }) {
   };
 
   const handleAddClass = async () => {
-    if (!newClass.class_name || !newClass.class_code) {
-      Alert.alert('Error', 'Class name and code are required');
+    if (!newClass.class_name || !newClass.class_code || !newClass.section || !newClass.start_time || !newClass.end_time || !newClass.days) {
+      Alert.alert('Error', 'All required fields must be filled');
       return;
     }
 
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const response = await api.post('/classes/index.php', newClass, {
+      
+      // Build schedule string from days and times
+      const schedule = `${newClass.days} - ${newClass.start_time} to ${newClass.end_time}`;
+      
+      const classData = {
+        class_name: newClass.class_name,
+        class_code: newClass.class_code,
+        section: newClass.section,
+        schedule: schedule,
+        room: newClass.room || null
+      };
+      
+      const response = await api.post('/classes/index.php', classData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         Alert.alert('Success', 'Class created successfully');
         setModalVisible(false);
-        setNewClass({ class_name: '', class_code: '', section: '', schedule: '', room: '' });
+        setNewClass({ class_name: '', class_code: '', section: '', description: '', start_time: '', end_time: '', days: '', room: '' });
         fetchClasses();
       } else {
         Alert.alert('Error', response.data.message);
@@ -121,49 +138,106 @@ export default function ClassesScreen({ navigation }) {
     <View style={styles.container}>
       {/* Add Class Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Class</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Class Name *"
-              value={newClass.class_name}
-              onChangeText={(text) => setNewClass({...newClass, class_name: text})}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Class Code * (e.g., CS101)"
-              value={newClass.class_code}
-              onChangeText={(text) => setNewClass({...newClass, class_code: text})}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Section (optional)"
-              value={newClass.section}
-              onChangeText={(text) => setNewClass({...newClass, section: text})}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Schedule (e.g., Mon, Wed 8:00 AM)"
-              value={newClass.schedule}
-              onChangeText={(text) => setNewClass({...newClass, schedule: text})}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Room (optional)"
-              value={newClass.room}
-              onChangeText={(text) => setNewClass({...newClass, room: text})}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAddClass}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalIconContainer}>
+                    <Ionicons name="book" size={28} color={COLORS.white} />
+                  </View>
+                </View>
+                <Text style={styles.modalTitle}>Add New Class</Text>
+                
+                <Text style={styles.fieldLabel}>Class Name *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="e.g., Mathematics 101"
+                  placeholderTextColor={COLORS.gray}
+                  value={newClass.class_name}
+                  onChangeText={(text) => setNewClass({...newClass, class_name: text})}
+                />
+                
+                <Text style={styles.fieldLabel}>Class Code *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="e.g., MATH-101"
+                  placeholderTextColor={COLORS.gray}
+                  value={newClass.class_code}
+                  onChangeText={(text) => setNewClass({...newClass, class_code: text})}
+                />
+                
+                <Text style={styles.fieldLabel}>Section *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="e.g., Grade 10 - Diamond"
+                  placeholderTextColor={COLORS.gray}
+                  value={newClass.section}
+                  onChangeText={(text) => setNewClass({...newClass, section: text})}
+                />
+                
+                <Text style={styles.fieldLabel}>Description (Optional)</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  placeholder="Brief description of the class..."
+                  placeholderTextColor={COLORS.gray}
+                  multiline
+                  numberOfLines={3}
+                  value={newClass.description}
+                  onChangeText={(text) => setNewClass({...newClass, description: text})}
+                />
+                
+                <Text style={styles.fieldLabel}>Start Time *</Text>
+                <View style={styles.timeInputContainer}>
+                  <Ionicons name="time-outline" size={20} color={COLORS.gray} />
+                  <TextInput
+                    style={styles.timeInput}
+                    placeholder="--:-- --"
+                    placeholderTextColor={COLORS.gray}
+                    value={newClass.start_time}
+                    onChangeText={(text) => setNewClass({...newClass, start_time: text})}
+                  />
+                </View>
+                
+                <Text style={styles.fieldLabel}>End Time *</Text>
+                <View style={styles.timeInputContainer}>
+                  <Ionicons name="time-outline" size={20} color={COLORS.gray} />
+                  <TextInput
+                    style={styles.timeInput}
+                    placeholder="--:-- --"
+                    placeholderTextColor={COLORS.gray}
+                    value={newClass.end_time}
+                    onChangeText={(text) => setNewClass({...newClass, end_time: text})}
+                  />
+                </View>
+                
+                <Text style={styles.fieldLabel}>Days *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="e.g., Monday, Wednesday, Friday"
+                  placeholderTextColor={COLORS.gray}
+                  value={newClass.days}
+                  onChangeText={(text) => setNewClass({...newClass, days: text})}
+                />
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.saveButton} onPress={handleAddClass}>
+                    <Text style={styles.saveButtonText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Header */}
@@ -456,32 +530,79 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
   modalContent: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     width: '90%',
-    maxWidth: 400,
+    maxWidth: 450,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#8B0000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     marginBottom: 20,
     textAlign: 'center',
   },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+    marginTop: 8,
+  },
   modalInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     fontSize: 16,
     marginBottom: 12,
+    backgroundColor: COLORS.white,
+    color: COLORS.textPrimary,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  timeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
+  },
+  timeInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+    color: COLORS.textPrimary,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: 20,
   },
   cancelButton: {
     flex: 1,
