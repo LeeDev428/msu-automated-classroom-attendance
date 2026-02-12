@@ -49,43 +49,6 @@ export default function ClassesScreen({ navigation }) {
     fetchClasses();
   };
 
-  const handleAddClass = async () => {
-    if (!newClass.class_name || !newClass.class_code || !newClass.section || !newClass.start_time || !newClass.end_time || !newClass.days) {
-      Alert.alert('Error', 'All required fields must be filled');
-      return;
-    }
-
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      
-      // Build schedule string from days and times
-      const schedule = `${newClass.days} - ${newClass.start_time} to ${newClass.end_time}`;
-      
-      const classData = {
-        class_name: newClass.class_name,
-        class_code: newClass.class_code,
-        section: newClass.section,
-        schedule: schedule,
-        room: newClass.room || null
-      };
-      
-      const response = await api.post('/classes/index.php', classData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        Alert.alert('Success', 'Class created successfully');
-        setModalVisible(false);
-        setNewClass({ class_name: '', class_code: '', section: '', description: '', start_time: '', end_time: '', days: '', room: '' });
-        fetchClasses();
-      } else {
-        Alert.alert('Error', response.data.message);
-      }
-    } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create class');
-    }
-  };
-
   const handleDeleteClass = async (classId) => {
     Alert.alert('Delete Class', 'Are you sure you want to delete this class?', [
       { text: 'Cancel', style: 'cancel' },
