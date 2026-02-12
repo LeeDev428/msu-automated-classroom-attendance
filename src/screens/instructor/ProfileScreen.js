@@ -148,7 +148,7 @@ export default function ProfileScreen({ navigation }) {
             label="Change Password"
             onPress={() => {}}
           />
-          <MenuButton
+          {/* <MenuButton
             icon="notifications-outline"
             label="Notifications"
             onPress={() => {}}
@@ -157,11 +157,11 @@ export default function ProfileScreen({ navigation }) {
             icon="shield-checkmark-outline"
             label="Privacy & Security"
             onPress={() => {}}
-          />
+          /> */}
         </View>
 
         {/* Support Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
           
           <MenuButton
@@ -179,7 +179,7 @@ export default function ProfileScreen({ navigation }) {
             label="About"
             onPress={() => {}}
           />
-        </View>
+        </View> */}
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
