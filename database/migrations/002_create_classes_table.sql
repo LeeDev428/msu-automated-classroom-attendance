@@ -1,0 +1,24 @@
+-- Migration: 002_create_classes_table.sql
+-- Create classes table with all required fields
+
+CREATE TABLE IF NOT EXISTS classes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    instructor_id INT NOT NULL,
+    class_name VARCHAR(150) NOT NULL,
+    class_code VARCHAR(20) NOT NULL UNIQUE,
+    section VARCHAR(50),
+    description TEXT,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    days VARCHAR(100) NOT NULL COMMENT 'e.g., Monday, Wednesday, Friday',
+    room VARCHAR(50),
+    semester VARCHAR(50),
+    academic_year VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_instructor (instructor_id),
+    INDEX idx_class_code (class_code),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
