@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
@@ -38,25 +39,25 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login.php', {
+      const response = await api.post('/modules/instructor/auth/login.php', {
         email,
-        name,
-        password,
-        role: 'instructor'
+        password
       });
 
       if (response.data.success) {
+        // Store auth token and user data
+        await AsyncStorage.setItem('authToken', response.data.data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.user));
+        
         // Navigate to instructor dashboard
         navigation.replace('InstructorMain');
       } else {
         Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
       }
     } catch (error) {
-      Alert.alert(
-        'Connection Error',
-        'Unable to connect to server. Please check if backend is running.'
-      );
-      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.message || 'Unable to connect to server. Please check if backend is running.';
+      Alert.alert('Login Error', errorMessage);
+      console.error('Login error:', error.response?.data || error);
     } finally {
       setLoading(false);
     }
