@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -69,9 +70,11 @@ export default function LoginScreen({ navigation }) {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Header Section */}
           <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>ACA</Text>
-            </View>
+            <Image
+              source={require('../../assets/images/Automated-Classroom-Attendance-Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.universityText}>Automated Classroom Attendance</Text>
             <Text style={styles.subtitleText}>QR Code Monitoring System</Text>
           </View>
@@ -180,21 +183,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: {
+    width: 100,
+    height: 100,
     marginBottom: 15,
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.primary,
   },
   universityText: {
     fontSize: 16,
