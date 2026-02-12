@@ -215,10 +215,10 @@ const ClassCard = ({ classData, onDelete }) => {
       </View>
 
       <View style={styles.classCardFooter}>
-        <TouchableOpacity style={styles.actionButton}>
+        {/* <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="qr-code" size={18} color={COLORS.primary} />
           <Text style={styles.actionButtonText}>Generate QR</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="list" size={18} color={COLORS.info} />
@@ -330,11 +330,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
-  sectionText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
   classCardBody: {
     marginBottom: 12,
   },
@@ -386,7 +381,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 12,
     color: COLORS.textPrimary,
-    marginLeft: 6,
+    marginLeft: 20,
     fontWeight: '500',
   },
   emptyState: {
@@ -398,5 +393,110 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     marginTop: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    maxWidth: 450,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#8B0000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
+    color: COLORS.textPrimary,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  timeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
+  },
+  timeInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+    color: COLORS.textPrimary,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    textAlign: 'center',
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    marginLeft: 8,
+  },
+  saveButtonText: {
+    textAlign: 'center',
+    color: COLORS.white,
+    fontWeight: '600',
   },
 });
