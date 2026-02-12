@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     // Validation
-    if (!email || !name || !password) {
+    if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await api.post('/modules/instructor/auth/login.php', {
+      const response = await api.post('/auth/login.php', {
         email,
         password
       });
