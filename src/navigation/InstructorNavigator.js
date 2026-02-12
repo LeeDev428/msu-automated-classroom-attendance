@@ -5,7 +5,7 @@ import { COLORS } from '../constants/colors';
 
 // Screens
 import DashboardScreen from '../screens/instructor/DashboardScreen';
-import ScannerScreen from '../screens/instructor/ScannerScreen';
+// import ScannerScreen from '../screens/instructor/ScannerScreen'; // Disabled for now
 import ClassesScreen from '../screens/instructor/ClassesScreen';
 import ProfileScreen from '../screens/instructor/ProfileScreen';
 
@@ -21,8 +21,6 @@ export default function InstructorNavigator() {
 
           if (route.name === 'Dashboard') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Scanner') {
-            iconName = focused ? 'qr-code' : 'qr-code-outline';
           } else if (route.name === 'Classes') {
             iconName = focused ? 'book' : 'book-outline';
           } else if (route.name === 'Profile') {
@@ -59,13 +57,13 @@ export default function InstructorNavigator() {
           tabBarLabel: 'Dashboard',
         }}
       />
-      <Tab.Screen 
+      {/* <Tab.Screen 
         name="Scanner" 
         component={ScannerScreen}
         options={{
           tabBarLabel: 'Scanner',
         }}
-      />
+      /> */}
       <Tab.Screen 
         name="Classes" 
         component={ClassesScreen}
