@@ -30,6 +30,15 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    console.log('=== Registration Started ===');
+    console.log('Form Data:', {
+      fullName: formData.fullName,
+      email: formData.email,
+      department: formData.department,
+      employeeId: formData.employeeId,
+      hasPassword: !!formData.password
+    });
+
     // Validation
     if (!formData.fullName || !formData.email || !formData.department || 
         !formData.employeeId || !formData.password || !formData.confirmPassword) {
@@ -37,10 +46,11 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
-    if (!formData.email.includes('@msuiit.edu.ph')) {
-      Alert.alert('Error', 'Please use your institutional email (@msuiit.edu.ph)');
-      return;
-    }
+    // TEMPORARY: Email validation disabled for testing
+    // if (!formData.email.includes('@msuiit.edu.ph')) {
+    //   Alert.alert('Error', 'Please use your institutional email (@msuiit.edu.ph)');
+    //   return;
+    // }
 
     if (formData.password !== formData.confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
@@ -53,15 +63,23 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setLoading(true);
+    console.log('Validation passed, sending API request...');
 
     try {
-      const response = await api.post('/modules/instructor/auth/register.php', {
+      const payload = {
         name: formData.fullName,
         email: formData.email,
         department: formData.department,
         employee_id: formData.employeeId,
         password: formData.password
-      });
+      };
+      
+      console.log('API Endpoint:', '/modules/instructor/auth/register.php');
+      console.log('Payload:', { ...payload, password: '***' });
+
+      const response = await api.post('/modules/instructor/auth/register.php', payload);
+
+      console.log('API Response:', response.data);
 
       if (response.data.success) {
         Alert.alert(
@@ -78,7 +96,23 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert('Registration Failed', response.data.message || 'Please try again');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Unable to connect to server. Please check if backend is running.';
+      console.error('=== Registration Error ===');
+      console.error('Error Type:', error.name);
+      console.error('Error Message:', error.message);
+      console.error('Response Status:', error.response?.status);
+      console.error('Response Data:', error.response?.data);
+      console.error('Request Config:', error.config?.url);
+      
+      let errorMessage = 'Unable to connect to server.';
+      
+      if (error.response) {
+        // Server responded with error
+        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'No response from server. Please check if:\n1. Laragon is running\n2. Apache is started\n3. Backend is deployed';
+      }
+      
       const errors = error.response?.data?.errors;
       
       if (errors) {
@@ -87,9 +121,9 @@ export default function RegisterScreen({ navigation }) {
       } else {
         Alert.alert('Registration Error', errorMessage);
       }
-      console.error('Register error:', error.response?.data || error);
     } finally {
       setLoading(false);
+      console.log('=== Registration Completed ===');
     }
   };
 
