@@ -19,7 +19,6 @@ import api from '../config/api';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -97,21 +96,6 @@ export default function LoginScreen({ navigation }) {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            {/* Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Name *</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color={COLORS.gray} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
                 />
               </View>
             </View>
