@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,57 +6,166 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Alert,
+  Modal,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
+import api from '../../config/api';
 
 export default function ClassesScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newClass, setNewClass] = useState({
+    class_name: '',
+    class_code: '',
+    section: '',
+    schedule: '',
+    room: ''
+  });
 
-  // Mock data - will be replaced with API data
-  const classes = [
-    {
-      id: 'CS101',
-      name: 'Introduction to Computer Science',
-      schedule: 'Mon, Wed, Fri - 8:00 AM',
-      enrolled: 45,
-      present: 42,
-      attendanceRate: 93,
-    },
-    {
-      id: 'CS102',
-      name: 'Data Structures and Algorithms',
-      schedule: 'Tue, Thu - 10:00 AM',
-      enrolled: 38,
-      present: 35,
-      attendanceRate: 92,
-    },
-    {
-      id: 'CS201',
-      name: 'Database Management Systems',
-      schedule: 'Mon, Wed - 2:00 PM',
-      enrolled: 40,
-      present: 38,
-      attendanceRate: 95,
-    },
-    {
-      id: 'CS301',
-      name: 'Software Engineering',
-      schedule: 'Tue, Thu - 3:30 PM',
-      enrolled: 33,
-      present: 27,
-      attendanceRate: 82,
-    },
-  ];
+  const fetchClasses = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await api.get('/classes/index.php', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setClasses(response.data.data);
+      }
+    } catch (error) {
+      console.error('Classes fetch error:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchClasses();
+  };
+
+  const handleAddClass = async () => {
+    if (!newClass.class_name || !newClass.class_code) {
+      Alert.alert('Error', 'Class name and code are required');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await api.post('/classes/index.php', newClass, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        Alert.alert('Success', 'Class created successfully');
+        setModalVisible(false);
+        setNewClass({ class_name: '', class_code: '', section: '', schedule: '', room: '' });
+        fetchClasses();
+      } else {
+        Alert.alert('Error', response.data.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to create class');
+    }
+  };
+
+  const handleDeleteClass = async (classId) => {
+    Alert.alert('Delete Class', 'Are you sure you want to delete this class?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const token = await AsyncStorage.getItem('authToken');
+            await api.delete(`/classes/index.php?id=${classId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchClasses();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete class');
+          }
+        }
+      }
+    ]);
+  };
 
   const filteredClasses = classes.filter((cls) =>
-    cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cls.id.toLowerCase().includes(searchQuery.toLowerCase())
+    cls.class_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cls.class_code?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
+      {/* Add Class Modal */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Class</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Class Name *"
+              value={newClass.class_name}
+              onChangeText={(text) => setNewClass({...newClass, class_name: text})}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Class Code * (e.g., CS101)"
+              value={newClass.class_code}
+              onChangeText={(text) => setNewClass({...newClass, class_code: text})}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Section (optional)"
+              value={newClass.section}
+              onChangeText={(text) => setNewClass({...newClass, section: text})}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Schedule (e.g., Mon, Wed 8:00 AM)"
+              value={newClass.schedule}
+              onChangeText={(text) => setNewClass({...newClass, schedule: text})}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Room (optional)"
+              value={newClass.room}
+              onChangeText={(text) => setNewClass({...newClass, room: text})}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleAddClass}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header */}
       <LinearGradient
         colors={[COLORS.primary, COLORS.primaryDark]}
