@@ -1,78 +1,63 @@
 <?php
-// backend/auth/register.php
-// Handle instructor registration
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-include_once '../config/cors.php';
-include_once '../config/database.php';
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once '../core/Database.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 
-$response = array();
-
-try {
-    // Validate required fields
-    if (
-        !empty($data->fullName) &&
-        !empty($data->email) &&
-        !empty($data->department) &&
-        !empty($data->employeeId) &&
-        !empty($data->password) &&
-        !empty($data->role)
-    ) {
-        // Check if email already exists
-        $check_query = "SELECT id FROM users WHERE email = :email";
-        $check_stmt = $db->prepare($check_query);
-        $check_stmt->bindParam(":email", $data->email);
-        $check_stmt->execute();
-
-        if ($check_stmt->rowCount() > 0) {
-            http_response_code(400);
-            $response['success'] = false;
-            $response['message'] = "Email already registered";
-        } else {
-            // Insert new user
-            $query = "INSERT INTO users 
-                     (name, email, password, role, department, employee_id, created_at) 
-                     VALUES 
-                     (:name, :email, :password, :role, :department, :employee_id, NOW())";
-
-            $stmt = $db->prepare($query);
-
-            // Hash password
-            $hashed_password = password_hash($data->password, PASSWORD_BCRYPT);
-
-            // Bind values
-            $stmt->bindParam(":name", $data->fullName);
-            $stmt->bindParam(":email", $data->email);
-            $stmt->bindParam(":password", $hashed_password);
-            $stmt->bindParam(":role", $data->role);
-            $stmt->bindParam(":department", $data->department);
-            $stmt->bindParam(":employee_id", $data->employeeId);
-
-            if ($stmt->execute()) {
-                http_response_code(201);
-                $response['success'] = true;
-                $response['message'] = "Registration successful";
-                $response['user_id'] = $db->lastInsertId();
-            } else {
-                http_response_code(500);
-                $response['success'] = false;
-                $response['message'] = "Unable to register user";
-            }
-        }
-    } else {
-        http_response_code(400);
-        $response['success'] = false;
-        $response['message'] = "All fields are required";
-    }
-} catch (Exception $e) {
-    http_response_code(500);
-    $response['success'] = false;
-    $response['message'] = "Server error: " . $e->getMessage();
+if (!$data) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
+    exit();
 }
 
-echo json_encode($response);
+// Simple validation
+if (empty($data->name) || empty($data->email) || empty($data->password) || empty($data->department) || empty($data->employee_id)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'All fields required']);
+    exit();
+}
+
+try {
+    // Check if email exists
+    $check = $db->prepare("SELECT id FROM users WHERE email = ?");
+    $check->execute([$data->email]);
+    
+    if ($check->rowCount() > 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Email already registered']);
+        exit();
+    }
+    
+    // Insert user
+    $stmt = $db->prepare("INSERT INTO users (name, email, password, role, department, employee_id, created_at) VALUES (?, ?, ?, 'instructor', ?, ?, NOW())");
+    
+    $hashed = password_hash($data->password, PASSWORD_BCRYPT);
+    
+    if ($stmt->execute([$data->name, $data->email, $hashed, $data->department, $data->employee_id])) {
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Registration successful',
+            'user_id' => $db->lastInsertId()
+        ]);
+    } else {
+        throw new Exception('Database insert failed');
+    }
+    
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
 ?>
