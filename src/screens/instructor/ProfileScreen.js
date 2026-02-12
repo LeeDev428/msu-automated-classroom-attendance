@@ -15,9 +15,9 @@ import { COLORS } from '../../constants/colors';
 export default function ProfileScreen({ navigation }) {
   const instructorData = {
     name: 'Prof. Rodriguez',
-    email: 'rodriguez@msuiit.edu.ph',
+    email: 'rodriguez@example.com',
     department: 'Computer Science',
-    employeeId: 'MSU-2024-001',
+    employeeId: 'EMP-2024-001',
     phone: '+63 912 345 6789',
     joinDate: 'January 2024',
   };
