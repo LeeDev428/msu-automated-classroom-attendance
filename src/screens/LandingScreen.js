@@ -22,10 +22,9 @@ export default function LandingScreen({ navigation }) {
         {/* Logo Section */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>MSU</Text>
+            <Text style={styles.logoText}>ACA</Text>
           </View>
-          <Text style={styles.universityText}>MSU-MAGUINDANAO</Text>
-          <Text style={styles.titleText}>Automated Classroom Attendance</Text>
+          <Text style={styles.universityText}>Automated Classroom Attendance</Text>
           <Text style={styles.subtitleText}>QR Code Monitoring System</Text>
         </View>
 
@@ -63,7 +62,7 @@ export default function LandingScreen({ navigation }) {
         </View>
 
         <Text style={styles.footerText}>
-          Mindanao State University - Maguindanao
+          Classroom Attendance System
         </Text>
       </View>
     </LinearGradient>
