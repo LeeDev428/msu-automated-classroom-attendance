@@ -191,7 +191,7 @@ const ClassCard = ({ classData, onDelete }) => {
           </View>
         )}
 
-        <View style={styles.statsContainer}>
+        {/* <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Ionicons name="people" size={18} color={COLORS.info} />
             <Text style={styles.statValue}>{classData.enrolled || 0}</Text>
@@ -211,7 +211,7 @@ const ClassCard = ({ classData, onDelete }) => {
             </Text>
             <Text style={styles.statLabel}>Rate</Text>
           </View>
-        </View>
+        </View> */}
       </View>
 
       <View style={styles.classCardFooter}>
