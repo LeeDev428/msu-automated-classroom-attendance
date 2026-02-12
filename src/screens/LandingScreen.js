@@ -21,9 +21,11 @@ export default function LandingScreen({ navigation }) {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>ACA</Text>
-          </View>
+          <Image
+            source={require('../../assets/images/Automated-Classroom-Attendance-Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.universityText}>Automated Classroom Attendance</Text>
           <Text style={styles.subtitleText}>QR Code Monitoring System</Text>
         </View>
@@ -91,21 +93,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  logoCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: {
+    width: 150,
+    height: 150,
     marginBottom: 20,
-    borderWidth: 3,
-    borderColor: COLORS.secondary,
-  },
-  logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: COLORS.primary,
   },
   universityText: {
     fontSize: 24,
