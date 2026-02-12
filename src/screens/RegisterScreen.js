@@ -74,10 +74,10 @@ export default function RegisterScreen({ navigation }) {
         password: formData.password
       };
       
-      console.log('API Endpoint:', '/modules/instructor/auth/register.php');
+      console.log('API Endpoint:', '/auth/register.php');
       console.log('Payload:', { ...payload, password: '***' });
 
-      const response = await api.post('/modules/instructor/auth/register.php', payload);
+      const response = await api.post('/auth/register.php', payload);
 
       console.log('API Response:', response.data);
 
