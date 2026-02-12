@@ -140,9 +140,9 @@ export default function RegisterScreen({ navigation }) {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>MSU</Text>
+              <Text style={styles.logoText}>ACA</Text>
             </View>
-            <Text style={styles.universityText}>MSU-MAGUINDANAO</Text>
+            <Text style={styles.universityText}>Automated Classroom Attendance</Text>
             <Text style={styles.titleText}>Instructor Registration</Text>
           </View>
 
@@ -165,14 +165,14 @@ export default function RegisterScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Institutional Email */}
+            {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Institutional Email *</Text>
+              <Text style={styles.label}>Email *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color={COLORS.gray} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="instructor@msuiit.edu.ph"
+                  placeholder="instructor@example.com"
                   value={formData.email}
                   onChangeText={(text) => setFormData({...formData, email: text})}
                   keyboardType="email-address"
