@@ -115,22 +115,22 @@ export default function ProfileScreen({ navigation }) {
           <InfoItem
             icon="briefcase-outline"
             label="Department"
-            value={instructorData.department}
+            value={instructorData.department || 'Not set'}
           />
           <InfoItem
             icon="card-outline"
             label="Employee ID"
-            value={instructorData.employeeId}
+            value={instructorData.employee_id || 'Not set'}
           />
           <InfoItem
-            icon="call-outline"
-            label="Phone"
-            value={instructorData.phone}
+            icon="mail-outline"
+            label="Email"
+            value={instructorData.email || 'Not set'}
           />
           <InfoItem
             icon="calendar-outline"
             label="Member Since"
-            value={instructorData.joinDate}
+            value={instructorData.created_at ? new Date(instructorData.created_at).toLocaleDateString() : 'N/A'}
           />
         </View>
 
