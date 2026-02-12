@@ -1,7 +1,4 @@
--- Migration: 002_create_classes_table.sql
--- Create classes table with all required fields
-
-CREATE TABLE IF NOT EXISTS classes (
+CREATE TABLE classes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     instructor_id INT NOT NULL,
     class_name VARCHAR(150) NOT NULL,
@@ -10,7 +7,7 @@ CREATE TABLE IF NOT EXISTS classes (
     description TEXT,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    days VARCHAR(100) NOT NULL COMMENT 'e.g., Monday, Wednesday, Friday',
+    days VARCHAR(100) NOT NULL,
     room VARCHAR(50),
     semester VARCHAR(50),
     academic_year VARCHAR(20),
@@ -21,4 +18,4 @@ CREATE TABLE IF NOT EXISTS classes (
     INDEX idx_instructor (instructor_id),
     INDEX idx_class_code (class_code),
     INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
