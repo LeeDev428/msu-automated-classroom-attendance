@@ -84,6 +84,7 @@ export default function AddClassScreen({ navigation }) {
         end_time: formatTimeForDB(classData.end_time),
         days: classData.days.join(', '),
         room: classData.room,
+        is_active: true, // New classes are active by default
       };
 
       const response = await api.post('/classes/index.php', payload, {
