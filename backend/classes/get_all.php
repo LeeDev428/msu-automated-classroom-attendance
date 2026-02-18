@@ -18,12 +18,17 @@ try {
                     c.id,
                     c.class_code,
                     c.class_name,
-                    c.schedule,
+                    c.section,
+                    c.start_time,
+                    c.end_time,
+                    c.days,
+                    c.room,
+                    c.is_active,
                     COUNT(DISTINCT e.student_id) as enrolled_students
                   FROM classes c
                   LEFT JOIN enrollments e ON c.id = e.class_id
                   WHERE c.instructor_id = :instructor_id
-                  GROUP BY c.id, c.class_code, c.class_name, c.schedule
+                  GROUP BY c.id, c.class_code, c.class_name, c.section, c.start_time, c.end_time, c.days, c.room, c.is_active
                   ORDER BY c.class_code";
 
         $stmt = $db->prepare($query);
@@ -54,7 +59,12 @@ try {
                 'id' => $row['id'],
                 'class_code' => $row['class_code'],
                 'class_name' => $row['class_name'],
-                'schedule' => $row['schedule'],
+                'section' => $row['section'],
+                'start_time' => $row['start_time'],
+                'end_time' => $row['end_time'],
+                'days' => $row['days'],
+                'room' => $row['room'],
+                'is_active' => (bool)$row['is_active'],
                 'enrolled_students' => $enrolled,
                 'present_today' => $present,
                 'attendance_rate' => $attendance_rate
