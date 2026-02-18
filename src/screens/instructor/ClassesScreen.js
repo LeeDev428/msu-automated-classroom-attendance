@@ -202,7 +202,11 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
       activeOpacity={0.7}
     >
       {/* Active/Inactive Toggle */}
-      <View style={styles.statusToggleContainer}>
+      <View 
+        style={styles.statusToggleContainer}
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={(e) => e.stopPropagation()}
+      >
         <View style={styles.statusTextContainer}>
           <Ionicons 
             name={isActive ? "checkmark-circle" : "close-circle"} 
@@ -239,7 +243,12 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
             <Text style={styles.sectionText}>{classData.section}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={onDelete}>
+        <TouchableOpacity 
+          onPress={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
           <Ionicons name="trash-outline" size={24} color={COLORS.error} />
         </TouchableOpacity>
       </View>
@@ -280,17 +289,29 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
       </View>
 
       <View style={styles.classCardFooter}>
-        {/* <TouchableOpacity style={styles.actionButton}>
+        {/* <TouchableOpacity style={styles.actionButton} onPress={(e) => e.stopPropagation()}>
           <Ionicons name="qr-code" size={18} color={COLORS.primary} />
           <Text style={styles.actionButtonText}>Generate QR</Text>
         </TouchableOpacity> */}
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            // TODO: Navigate to students list
+          }}
+        >
           <Ionicons name="list" size={18} color={COLORS.info} />
           <Text style={styles.actionButtonText}>View Students</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            // TODO: Navigate to report
+          }}
+        >
           <Ionicons name="document-text" size={18} color={COLORS.secondary} />
           <Text style={styles.actionButtonText}>Report</Text>
         </TouchableOpacity>
