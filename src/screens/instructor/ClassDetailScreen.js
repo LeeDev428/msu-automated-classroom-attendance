@@ -129,7 +129,7 @@ export default function ClassDetailScreen({ route, navigation }) {
         }
       >
         {/* Class Status Toggle */}
-        <View style={styles.statusCard}>
+        {/* <View style={styles.statusCard}>
           <View style={styles.statusToggleContainer}>
             <View style={styles.statusTextContainer}>
               <Ionicons 
@@ -157,7 +157,7 @@ export default function ClassDetailScreen({ route, navigation }) {
               </Text>
             </View>
           )}
-        </View>
+        </View> */}
 
         {/* Class Info Card */}
         <View style={styles.infoCard}>
