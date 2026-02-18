@@ -57,14 +57,14 @@ try {
     $presentStmt = $db->prepare("SELECT COUNT(*) as total 
         FROM attendance a 
         JOIN classes c ON a.class_id = c.id 
-        WHERE c.instructor_id = ? AND a.date = ? AND a.status = 'present'");
+        WHERE c.instructor_id = ? AND DATE(a.check_in_time) = ? AND a.status = 'present'");
     $presentStmt->execute([$userId, $today]);
     $present = $presentStmt->fetch(PDO::FETCH_ASSOC);
     
     $absentStmt = $db->prepare("SELECT COUNT(*) as total 
         FROM attendance a 
         JOIN classes c ON a.class_id = c.id 
-        WHERE c.instructor_id = ? AND a.date = ? AND a.status = 'absent'");
+        WHERE c.instructor_id = ? AND DATE(a.check_in_time) = ? AND a.status = 'absent'");
     $absentStmt->execute([$userId, $today]);
     $absent = $absentStmt->fetch(PDO::FETCH_ASSOC);
     
