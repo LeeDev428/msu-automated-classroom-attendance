@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Switch,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -129,7 +130,12 @@ export default function ClassesScreen({ navigation }) {
           }
         >
           {filteredClasses.map((cls) => (
-            <ClassCard key={cls.id} classData={cls} onDelete={() => handleDeleteClass(cls.id)} />
+            <ClassCard 
+              key={cls.id} 
+              classData={cls} 
+              onDelete={() => handleDeleteClass(cls.id)}
+              onRefresh={fetchClasses}
+            />
           ))}
 
           {filteredClasses.length === 0 && (
@@ -144,7 +150,31 @@ export default function ClassesScreen({ navigation }) {
   );
 }
 
-const ClassCard = ({ classData, onDelete }) => {
+const ClassCard = ({ classData, onDelete, onRefresh }) => {
+  const [isActive, setIsActive] = useState(classData.is_active);
+  const [updating, setUpdating] = useState(false);
+
+  const handleToggleActive = async (value) => {
+    setUpdating(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      await api.put('/classes/index.php', {
+        id: classData.id,
+        is_active: value
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsActive(value);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Toggle active error:', error);
+      Alert.alert('Error', 'Failed to update class status');
+      setIsActive(!value); // Revert on error
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getAttendanceColor = (rate) => {
     if (rate >= 90) return COLORS.success;
     if (rate >= 75) return COLORS.warning;
@@ -166,6 +196,36 @@ const ClassCard = ({ classData, onDelete }) => {
 
   return (
     <TouchableOpacity style={styles.classCard}>
+      {/* Active/Inactive Toggle */}
+      <View style={styles.statusToggleContainer}>
+        <View style={styles.statusTextContainer}>
+          <Ionicons 
+            name={isActive ? "checkmark-circle" : "close-circle"} 
+            size={18} 
+            color={isActive ? COLORS.success : COLORS.textSecondary} 
+          />
+          <Text style={[styles.statusText, { color: isActive ? COLORS.success : COLORS.textSecondary }]}>
+            {isActive ? 'Class is active' : 'Class is inactive'}
+          </Text>
+        </View>
+        <Switch
+          value={isActive}
+          onValueChange={handleToggleActive}
+          trackColor={{ false: COLORS.grayLight, true: COLORS.success }}
+          thumbColor={COLORS.white}
+          disabled={updating}
+        />
+      </View>
+
+      {!isActive && (
+        <View style={styles.inactiveNotice}>
+          <Ionicons name="information-circle-outline" size={14} color={COLORS.warning} />
+          <Text style={styles.inactiveNoticeText}>
+            Activate class to enable QR scanning
+          </Text>
+        </View>
+      )}
+
       <View style={styles.classCardHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.classCode}>{classData.class_code}</Text>
@@ -312,6 +372,44 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+  },
+  statusToggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  statusTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  inactiveNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  inactiveNoticeText: {
+    fontSize: 12,
+    color: COLORS.warning,
+    marginLeft: 6,
+  },
+  sectionText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   classCardHeader: {
     flexDirection: 'row',
