@@ -135,6 +135,7 @@ export default function ClassesScreen({ navigation }) {
               classData={cls} 
               onDelete={() => handleDeleteClass(cls.id)}
               onRefresh={fetchClasses}
+              navigation={navigation}
             />
           ))}
 
@@ -150,7 +151,7 @@ export default function ClassesScreen({ navigation }) {
   );
 }
 
-const ClassCard = ({ classData, onDelete, onRefresh }) => {
+const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
   const [isActive, setIsActive] = useState(classData.is_active);
   const [updating, setUpdating] = useState(false);
 
@@ -195,7 +196,11 @@ const ClassCard = ({ classData, onDelete, onRefresh }) => {
     : 'No schedule set';
 
   return (
-    <TouchableOpacity style={styles.classCard}>
+    <TouchableOpacity 
+      style={styles.classCard}
+      onPress={() => navigation.navigate('ClassDetail', { classData })}
+      activeOpacity={0.7}
+    >
       {/* Active/Inactive Toggle */}
       <View style={styles.statusToggleContainer}>
         <View style={styles.statusTextContainer}>
