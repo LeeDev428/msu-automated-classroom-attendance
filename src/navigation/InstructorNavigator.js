@@ -90,6 +90,8 @@ export default function InstructorNavigator() {
       <Stack.Screen name="EnrollStudent" component={EnrollStudentScreen} />
       <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
       <Stack.Screen name="ClassReport" component={ClassReportScreen} />
+      <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
+      <Stack.Screen name="ClassReport" component={ClassReportScreen} />
     </Stack.Navigator>
   );
 }
