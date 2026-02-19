@@ -244,7 +244,10 @@ export default function ClassDetailScreen({ route, navigation }) {
                   </Text>
                   <Text style={styles.studentId}>ID: {student.student_id}</Text>
                 </View>
-                <TouchableOpacity style={styles.studentAction}>
+                <TouchableOpacity 
+                  style={styles.studentAction}
+                  onPress={() => navigation.navigate('StudentDetail', { studentData: student, classData: classInfo })}
+                >
                   <Ionicons name="chevron-forward" size={20} color={COLORS.gray} />
                 </TouchableOpacity>
               </View>
