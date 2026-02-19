@@ -87,13 +87,15 @@ try {
     } else {
         // Create new student record
         $insertStudent = $db->prepare("
-            INSERT INTO students (student_id, first_name, last_name, phone, created_at) 
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO students (student_id, first_name, middle_initial, last_name, email, phone, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
         ");
         $insertStudent->execute([
             $data->student_id,
             $data->first_name,
+            $data->middle_initial ?? null,
             $data->last_name,
+            $data->email ?? null,
             $data->mobile_number
         ]);
         $studentDbId = $db->lastInsertId();
