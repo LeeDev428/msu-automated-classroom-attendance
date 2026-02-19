@@ -196,7 +196,7 @@ export default function ClassDetailScreen({ route, navigation }) {
             <Text style={styles.primaryButtonText}>Enroll Student</Text>
           </TouchableOpacity>
 
-          <View style={styles.secondaryButtonsRow}>
+          {/* <View style={styles.secondaryButtonsRow}>
             <TouchableOpacity style={styles.secondaryButton} disabled={!isActive}>
               <Ionicons name="qr-code" size={20} color={isActive ? COLORS.primary : COLORS.gray} />
               <Text style={[styles.secondaryButtonText, !isActive && styles.disabledText]}>
@@ -208,7 +208,7 @@ export default function ClassDetailScreen({ route, navigation }) {
               <Ionicons name="document-text" size={20} color={COLORS.secondary} />
               <Text style={styles.secondaryButtonText}>Report</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           {!isActive && (
             <View style={styles.disabledNotice}>
