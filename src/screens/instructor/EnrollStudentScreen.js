@@ -23,7 +23,9 @@ export default function EnrollStudentScreen({ route, navigation }) {
   const [studentData, setStudentData] = useState({
     student_id: '',
     first_name: '',
+    middle_initial: '',
     last_name: '',
+    email: '',
     parent_name: '',
     mobile_number: '',
   });
@@ -46,6 +48,10 @@ export default function EnrollStudentScreen({ route, navigation }) {
       Alert.alert('Validation Error', 'Mobile Number is required');
       return;
     }
+    if (studentData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentData.email.trim())) {
+      Alert.alert('Validation Error', 'Please enter a valid email address');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -55,7 +61,9 @@ export default function EnrollStudentScreen({ route, navigation }) {
         class_id: classData.id,
         student_id: studentData.student_id.trim(),
         first_name: studentData.first_name.trim(),
+        middle_initial: studentData.middle_initial.trim(),
         last_name: studentData.last_name.trim(),
+        email: studentData.email.trim(),
         parent_name: studentData.parent_name.trim(),
         mobile_number: studentData.mobile_number.trim(),
       };
@@ -137,7 +145,7 @@ export default function EnrollStudentScreen({ route, navigation }) {
 
           {/* Name Row */}
           <View style={styles.nameRow}>
-            <View style={styles.nameField}>
+            <View style={[styles.nameField, { flex: 2 }]}>
               <Text style={styles.label}>First Name *</Text>
               <TextInput
                 style={styles.input}
@@ -148,7 +156,19 @@ export default function EnrollStudentScreen({ route, navigation }) {
               />
             </View>
 
-            <View style={[styles.nameField, { marginLeft: 12 }]}>
+            <View style={[styles.nameField, { flex: 1, marginLeft: 8 }]}>
+              <Text style={styles.label}>M.I.</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="D."
+                value={studentData.middle_initial}
+                onChangeText={(text) => setStudentData({ ...studentData, middle_initial: text })}
+                autoCapitalize="characters"
+                maxLength={3}
+              />
+            </View>
+
+            <View style={[styles.nameField, { flex: 2, marginLeft: 8 }]}>
               <Text style={styles.label}>Last Name *</Text>
               <TextInput
                 style={styles.input}
@@ -159,6 +179,17 @@ export default function EnrollStudentScreen({ route, navigation }) {
               />
             </View>
           </View>
+
+          {/* Email */}
+          <Text style={styles.label}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="student@example.com (optional)"
+            value={studentData.email}
+            onChangeText={(text) => setStudentData({ ...studentData, email: text })}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
           {/* Parent/Guardian Information */}
           <Text style={styles.sectionHeader}>Parent/Guardian Information</Text>
