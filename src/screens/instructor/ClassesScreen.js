@@ -298,7 +298,7 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
           style={styles.actionButton}
           onPress={(e) => {
             e.stopPropagation();
-            // TODO: Navigate to students list
+            navigation.navigate('ClassDetail', { classData });
           }}
         >
           <Ionicons name="list" size={18} color={COLORS.info} />
@@ -309,7 +309,7 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
           style={styles.actionButton}
           onPress={(e) => {
             e.stopPropagation();
-            // TODO: Navigate to report
+            navigation.navigate('ClassReport', { classData });
           }}
         >
           <Ionicons name="document-text" size={18} color={COLORS.secondary} />
