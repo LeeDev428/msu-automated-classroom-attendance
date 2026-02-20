@@ -3,7 +3,7 @@ import axios from 'axios';
 // Update this URL to match your Laragon setup
 // For local development, use: http://localhost
 // For physical device testing, use your machine's IP address
-export const API_BASE_URL = 'http://192.168.0.31:8000/'; // Change to your Laragon IP and port
+export const API_BASE_URL = 'http://localhost/'; // Web mode: same machine as Laragon
 
 // Create axios instance with default config
 const api = axios.create({
