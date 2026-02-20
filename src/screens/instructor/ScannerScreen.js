@@ -36,47 +36,58 @@ export default function ScannerScreen() {
 
   const handleBarCodeScanned = async ({ type, data }) => {
     if (scanned) return;
-    
     setScanned(true);
-    
-    try {
-      // Parse QR code data (expected format: studentId|classId|timestamp)
-      const qrData = data.split('|');
-      
-      if (qrData.length >= 2) {
-        const [studentId, classId] = qrData;
-        
-        // Send attendance record to backend
-        const response = await api.post('/attendance/mark.php', {
-          studentId,
-          classId,
-          timestamp: new Date().toISOString(),
-        });
 
-        if (response.data.success) {
-          Alert.alert(
-            'Attendance Marked',
-            `Student ${studentId} successfully checked in for class ${classId}`,
-            [
-              {
-                text: 'OK',
-                onPress: () => setScanned(false),
-              },
-            ]
-          );
-        } else {
-          Alert.alert('Error', response.data.message || 'Failed to mark attendance');
-          setScanned(false);
-        }
-      } else {
-        Alert.alert('Invalid QR Code', 'Please scan a valid attendance QR code');
-        setScanned(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to process QR code');
-      console.error('Scanner error:', error);
-      setScanned(false);
+    // QR format: {student_db_id}|{class_id}|{full_name}
+    const parts = data.split('|');
+    if (parts.length < 3) {
+      Alert.alert('Invalid QR Code', 'Please scan a valid student attendance QR code', [
+        { text: 'OK', onPress: () => setScanned(false) },
+      ]);
+      return;
     }
+
+    const [studentDbId, classId, ...nameParts] = parts;
+    const studentName = nameParts.join(' ');
+
+    // Show confirmation before marking
+    Alert.alert(
+      'Confirm Attendance',
+      `Mark attendance for:\n\n${studentName}`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => setScanned(false),
+        },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            try {
+              const response = await api.post('/attendance/mark.php', {
+                studentId: studentDbId,
+                classId:   classId,
+              });
+
+              if (response.data.success) {
+                Alert.alert(
+                  '✓ Attendance Marked',
+                  `${response.data.student_name} has been marked present.`,
+                  [{ text: 'OK', onPress: () => setScanned(false) }]
+                );
+              } else {
+                Alert.alert('Failed', response.data.message || 'Could not mark attendance', [
+                  { text: 'OK', onPress: () => setScanned(false) },
+                ]);
+              }
+            } catch (error) {
+              const msg = error.response?.data?.message || 'Failed to mark attendance';
+              Alert.alert('Error', msg, [{ text: 'OK', onPress: () => setScanned(false) }]);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (hasPermission === null) {
