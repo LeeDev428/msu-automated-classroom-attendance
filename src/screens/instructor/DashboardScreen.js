@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,51 +17,50 @@ import api from '../../config/api';
 
 const { width } = Dimensions.get('window');
 
+const STATUS_COLOR = {
+  present: COLORS.success,
+  absent:  COLORS.error,
+  late:    '#f59e0b',
+  excused: COLORS.info,
+};
+
 export default function DashboardScreen({ navigation }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [dashboardData, setDashboardData] = useState({
-    instructorName: 'Loading...',
-    date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+  const [data, setData] = useState({
+    instructorName:   '',
+    date:             new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
     enrolledStudents: 0,
-    enrolledClasses: 0,
-    presentToday: 0,
-    absentToday: 0,
-    attendanceRate: 0,
+    enrolledClasses:  0,
+    presentToday:     0,
+    absentToday:      0,
+    attendanceRate:   0,
+    recentAttendance: [],
   });
 
-  const fetchDashboardData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const response = await api.get('/dashboard/stats.php', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await api.get('/dashboard/stats.php', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (response.data.success) {
-        setDashboardData(response.data.data);
-      }
-    } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      // Use stored user data as fallback
-      const userData = await AsyncStorage.getItem('userData');
-      if (userData) {
-        const user = JSON.parse(userData);
-        setDashboardData(prev => ({ ...prev, instructorName: user.name || 'Instructor' }));
+      if (res.data.success) setData(res.data.data);
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      const raw = await AsyncStorage.getItem('userData');
+      if (raw) {
+        const user = JSON.parse(raw);
+        setData(prev => ({ ...prev, instructorName: user.name || 'Instructor' }));
       }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchDashboardData();
-  };
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   if (loading) {
     return (
@@ -71,159 +70,146 @@ export default function DashboardScreen({ navigation }) {
     );
   }
 
+  const totalToday = data.presentToday + data.absentToday;
+  const rate = data.attendanceRate ?? 0;
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryDark]}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.universityName}>Automated Classroom Attendance</Text>
-            <Text style={styles.instructorName}>{dashboardData.instructorName}</Text>
-          </View>
-          <TouchableOpacity style={styles.menuButton}>
-            <Ionicons name="menu" size={28} color={COLORS.white} />
-          </TouchableOpacity>
-        </View>
+      {/* Header — no hamburger */}
+      <LinearGradient colors={[COLORS.primary, COLORS.primaryDark]} style={styles.header}>
+        <Text style={styles.headerSub}>Automated Classroom Attendance</Text>
+        <Text style={styles.headerName}>
+          {data.instructorName ? `Welcome, ${data.instructorName}` : 'Dashboard'}
+        </Text>
       </LinearGradient>
 
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
         }
       >
-        {/* Dashboard Title */}
+        {/* Date */}
         <View style={styles.titleSection}>
           <View style={styles.titleRow}>
-            <Ionicons name="stats-chart" size={24} color={COLORS.primary} />
+            <Ionicons name="stats-chart" size={22} color={COLORS.primary} />
             <Text style={styles.dashboardTitle}>Attendance Dashboard</Text>
           </View>
-          <Text style={styles.dateText}>{dashboardData.date}</Text>
-          <Text style={styles.subtitleText}>
-            Real-time attendance monitoring and analytics
-          </Text>
+          <Text style={styles.dateText}>{data.date}</Text>
         </View>
 
-        {/* Stats Grid - Top Row */}
+        {/* Stats row 1 */}
         <View style={styles.statsRow}>
           <StatsCard
             icon="people"
             iconColor={COLORS.info}
             iconBg={COLORS.infoLight}
             title="Enrolled Students"
-            value={dashboardData.enrolledStudents}
-            subtitle={`Across ${dashboardData.enrolledClasses} classes`}
+            value={data.enrolledStudents}
+            subtitle={`Across ${data.enrolledClasses} class${data.enrolledClasses !== 1 ? 'es' : ''}`}
           />
           <StatsCard
             icon="checkmark-circle"
             iconColor={COLORS.success}
             iconBg={COLORS.successLight}
             title="Present Today"
-            value={dashboardData.presentToday}
-            subtitle={dashboardData.presentChange}
+            value={data.presentToday}
+            subtitle={totalToday > 0 ? `${rate}% attendance rate` : 'No sessions today'}
           />
         </View>
 
-        {/* Stats Grid - Bottom Row */}
+        {/* Stats row 2 */}
         <View style={styles.statsRow}>
           <StatsCard
             icon="close-circle"
             iconColor={COLORS.error}
             iconBg={COLORS.errorLight}
             title="Absent Today"
-            value={dashboardData.absentToday}
-            subtitle={dashboardData.absentNote}
+            value={data.absentToday}
+            subtitle={totalToday > 0 ? `Out of ${totalToday} recorded` : 'No sessions today'}
           />
           <StatsCard
             icon="trending-up"
-            iconColor={COLORS.success}
-            iconBg={COLORS.successLight}
+            iconColor={rate >= 75 ? COLORS.success : COLORS.error}
+            iconBg={rate >= 75 ? COLORS.successLight : COLORS.errorLight}
             title="Attendance Rate"
-            value={`${dashboardData.attendanceRate}%`}
-            subtitle={dashboardData.attendanceStatus}
+            value={`${rate}%`}
+            subtitle={rate >= 75 ? 'Good standing' : rate > 0 ? 'Below threshold' : 'No data yet'}
           />
         </View>
 
-        {/* Today's Attendance Rate Card */}
+        {/* Attendance rate bar */}
         <View style={styles.attendanceCard}>
           <Text style={styles.attendanceCardTitle}>Today's Attendance Rate</Text>
-          <Text style={styles.attendanceCardTarget}>{dashboardData.todayTarget}</Text>
-          
-          <View style={styles.percentageContainer}>
-            <Text style={styles.percentageValue}>{dashboardData.todayAttendanceRate}%</Text>
-          </View>
-
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarBg}>
-              <View 
-                style={[
-                  styles.progressBarFill, 
-                  { width: `${dashboardData.todayAttendanceRate}%` }
-                ]} 
-              />
-            </View>
+          <Text style={styles.attendanceCardSub}>
+            {totalToday > 0
+              ? `${data.presentToday} present · ${data.absentToday} absent · ${totalToday} total`
+              : 'No attendance recorded today yet'}
+          </Text>
+          <Text style={[styles.percentageValue, { color: rate >= 75 ? COLORS.success : rate > 0 ? COLORS.error : COLORS.gray }]}>
+            {rate}%
+          </Text>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, {
+              width: `${rate}%`,
+              backgroundColor: rate >= 75 ? COLORS.success : COLORS.error,
+            }]} />
           </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.quickActions}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionButtonsRow}>
             <ActionButton
-              icon="qr-code"
-              label="Generate QR"
+              icon="scan"
+              label="Scan QR"
               color={COLORS.primary}
-              onPress={() => {}}
+              onPress={() => navigation.navigate('Scanner')}
             />
             <ActionButton
               icon="people-outline"
-              label="View Students"
+              label="Classes"
               color={COLORS.info}
-              onPress={() => {}}
+              onPress={() => navigation.navigate('Classes')}
             />
             <ActionButton
               icon="document-text"
               label="Reports"
               color={COLORS.secondary}
-              onPress={() => {}}
+              onPress={() => navigation.navigate('Classes')}
             />
             <ActionButton
-              icon="settings"
-              label="Settings"
+              icon="person"
+              label="Profile"
               color={COLORS.gray}
-              onPress={() => {}}
+              onPress={() => navigation.navigate('Profile')}
             />
           </View>
         </View>
 
-        {/* Recent Activity */}
-        <View style={styles.recentActivity}>
+        {/* Recent Activity — fully dynamic */}
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <ActivityItem
-            title="Class CS101 - Morning Session"
-            subtitle="142 students checked in"
-            time="2 hours ago"
-            icon="checkmark-circle"
-            iconColor={COLORS.success}
-          />
-          <ActivityItem
-            title="QR Code Generated"
-            subtitle="For CS102 - Afternoon Class"
-            time="3 hours ago"
-            icon="qr-code"
-            iconColor={COLORS.primary}
-          />
-          <ActivityItem
-            title="Attendance Report Exported"
-            subtitle="Weekly summary report"
-            time="1 day ago"
-            icon="document-text"
-            iconColor={COLORS.info}
-          />
+          {data.recentAttendance && data.recentAttendance.length > 0
+            ? data.recentAttendance.map((item, idx) => (
+                <ActivityItem
+                  key={idx}
+                  title={item.student_name}
+                  subtitle={`${item.class_code} · Marked ${item.status}`}
+                  time={item.checkin_time}
+                  icon={item.status === 'present' ? 'checkmark-circle' : item.status === 'late' ? 'time' : 'close-circle'}
+                  iconColor={STATUS_COLOR[item.status] || COLORS.gray}
+                />
+              ))
+            : (
+              <View style={styles.emptyActivity}>
+                <Ionicons name="calendar-outline" size={40} color={COLORS.gray} />
+                <Text style={styles.emptyText}>No recent attendance records</Text>
+              </View>
+            )
+          }
         </View>
 
         <View style={{ height: 30 }} />
@@ -232,10 +218,12 @@ export default function DashboardScreen({ navigation }) {
   );
 }
 
+/* ─── Sub-components ─────────────────────────────────── */
+
 const StatsCard = ({ icon, iconColor, iconBg, title, value, subtitle }) => (
   <View style={styles.statsCard}>
     <View style={[styles.statsIconContainer, { backgroundColor: iconBg }]}>
-      <Ionicons name={icon} size={28} color={iconColor} />
+      <Ionicons name={icon} size={26} color={iconColor} />
     </View>
     <Text style={styles.statsTitle}>{title}</Text>
     <Text style={styles.statsValue}>{value}</Text>
@@ -246,7 +234,7 @@ const StatsCard = ({ icon, iconColor, iconBg, title, value, subtitle }) => (
 const ActionButton = ({ icon, label, color, onPress }) => (
   <TouchableOpacity style={styles.actionButton} onPress={onPress}>
     <View style={[styles.actionIconContainer, { backgroundColor: color }]}>
-      <Ionicons name={icon} size={24} color={COLORS.white} />
+      <Ionicons name={icon} size={22} color={COLORS.white} />
     </View>
     <Text style={styles.actionLabel}>{label}</Text>
   </TouchableOpacity>
@@ -265,6 +253,8 @@ const ActivityItem = ({ title, subtitle, time, icon, iconColor }) => (
   </View>
 );
 
+/* ─── Styles ─────────────────────────────────────────── */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -275,92 +265,77 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 20,
   },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  universityName: {
+  headerSub: {
     fontSize: 12,
     color: COLORS.white,
-    opacity: 0.9,
+    opacity: 0.85,
   },
-  instructorName: {
+  headerName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.white,
     marginTop: 4,
-  },
-  menuButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   content: {
     flex: 1,
     padding: 16,
   },
   titleSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  dashboardTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginLeft: 10,
-  },
-  dateText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
     marginBottom: 4,
   },
-  subtitleText: {
-    fontSize: 12,
+  dashboardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginLeft: 8,
+  },
+  dateText: {
+    fontSize: 13,
     color: COLORS.textSecondary,
+    marginTop: 2,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   statsCard: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     width: (width - 48) / 2,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
   },
   statsIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   statsTitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   statsValue: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statsSubtitle: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.textSecondary,
   },
   attendanceCard: {
@@ -371,7 +346,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
   },
   attendanceCardTitle: {
@@ -380,22 +355,16 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
-  attendanceCardTarget: {
+  attendanceCardSub: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    marginBottom: 16,
-  },
-  percentageContainer: {
-    alignItems: 'center',
     marginBottom: 12,
   },
   percentageValue: {
-    fontSize: 48,
+    fontSize: 46,
     fontWeight: 'bold',
-    color: COLORS.success,
-  },
-  progressBarContainer: {
-    marginTop: 8,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   progressBarBg: {
     width: '100%',
@@ -406,14 +375,13 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: COLORS.success,
     borderRadius: 6,
   },
-  quickActions: {
-    marginBottom: 24,
+  section: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     marginBottom: 12,
@@ -427,20 +395,17 @@ const styles = StyleSheet.create({
     width: (width - 64) / 4,
   },
   actionIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   actionLabel: {
     fontSize: 11,
     color: COLORS.textSecondary,
     textAlign: 'center',
-  },
-  recentActivity: {
-    marginBottom: 16,
   },
   activityItem: {
     flexDirection: 'row',
@@ -448,6 +413,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
+    alignItems: 'center',
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -455,12 +421,12 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
   },
   activityIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   activityContent: {
     flex: 1,
@@ -472,11 +438,23 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   activitySubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
   },
   activityTime: {
     fontSize: 11,
+    color: COLORS.textSecondary,
+    marginLeft: 6,
+  },
+  emptyActivity: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+  },
+  emptyText: {
+    marginTop: 8,
+    fontSize: 13,
     color: COLORS.textSecondary,
   },
 });
