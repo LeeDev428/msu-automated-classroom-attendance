@@ -14,6 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import QRCode from 'react-native-qrcode-svg';
 import { COLORS } from '../../constants/colors';
 import api from '../../config/api';
 
@@ -272,6 +273,24 @@ export default function StudentDetailScreen({ route, navigation }) {
             </View>
           )}
 
+          {/* QR Code — View Mode */}
+          {!editing && classData && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Attendance QR Code</Text>
+              <Text style={styles.qrHint}>Instructor scans this to mark attendance</Text>
+              <View style={styles.qrContainer}>
+                <QRCode
+                  value={`${studentData.id}|${classData.id}|${fullName}`}
+                  size={200}
+                  color={COLORS.textPrimary}
+                  backgroundColor={COLORS.white}
+                />
+              </View>
+              <Text style={styles.qrLabel}>{fullName}</Text>
+              <Text style={styles.qrSub}>{classData.class_name}{classData.section ? ` — ${classData.section}` : ''}</Text>
+            </View>
+          )}
+
           {/* Personal Info — Edit Mode */}
           {editing && (
             <View style={styles.section}>
@@ -514,4 +533,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   saveBtnText: { fontSize: 15, fontWeight: 'bold', color: COLORS.white, marginLeft: 8 },
+  qrHint: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16, textAlign: 'center' },
+  qrContainer: { alignItems: 'center', paddingVertical: 16 },
+  qrLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center', marginTop: 12 },
+  qrSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 4 },
 });
