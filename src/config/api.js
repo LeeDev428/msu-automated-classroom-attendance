@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Update this URL to match your Laragon setup
-// For local development, use: http://localhost
-// For physical device testing, use your machine's IP address
-export const API_BASE_URL = 'http://192.168.0.31/'; // Change to client's IP (run: ipconfig)
+// Backend: run  php -S 0.0.0.0:8000  inside the /backend folder
+// Web (same machine):  http://localhost:8000/
+// Physical device / Expo Go on phone: use your machine's LAN IP (ipconfig), e.g. http://192.168.0.31:8000/
+export const API_BASE_URL = 'http://192.168.0.31:8000/'; // <-- change IP when network changes
 
 // Create axios instance with default config
 const api = axios.create({
