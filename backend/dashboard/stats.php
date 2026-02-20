@@ -71,17 +71,38 @@ try {
     // Calculate attendance rate
     $totalToday = ($present['total'] ?? 0) + ($absent['total'] ?? 0);
     $attendanceRate = $totalToday > 0 ? round(($present['total'] / $totalToday) * 100) : 0;
-    
+
+    // Get recent attendance records (last 5)
+    $recentStmt = $db->prepare("
+        SELECT
+            CONCAT(s.first_name,
+                CASE WHEN s.middle_initial IS NOT NULL THEN CONCAT(' ', s.middle_initial, '. ') ELSE ' ' END,
+                s.last_name) AS student_name,
+            c.class_name,
+            c.class_code,
+            DATE_FORMAT(a.check_in_time, '%h:%i %p') AS checkin_time,
+            a.status
+        FROM attendance a
+        JOIN students s ON a.student_id = s.id
+        JOIN classes  c ON a.class_id  = c.id
+        WHERE c.instructor_id = ?
+        ORDER BY a.check_in_time DESC
+        LIMIT 5
+    ");
+    $recentStmt->execute([$userId]);
+    $recentAttendance = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'success' => true,
         'data' => [
-            'instructorName' => $user['name'] ?? 'Instructor',
-            'date' => date('l, F j, Y'),
+            'instructorName'   => $user['name'] ?? 'Instructor',
+            'date'             => date('l, F j, Y'),
             'enrolledStudents' => (int)($enrolled['total'] ?? 0),
-            'enrolledClasses' => (int)($classCount['total'] ?? 0),
-            'presentToday' => (int)($present['total'] ?? 0),
-            'absentToday' => (int)($absent['total'] ?? 0),
-            'attendanceRate' => $attendanceRate
+            'enrolledClasses'  => (int)($classCount['total'] ?? 0),
+            'presentToday'     => (int)($present['total'] ?? 0),
+            'absentToday'      => (int)($absent['total'] ?? 0),
+            'attendanceRate'   => $attendanceRate,
+            'recentAttendance' => $recentAttendance,
         ]
     ]);
     
