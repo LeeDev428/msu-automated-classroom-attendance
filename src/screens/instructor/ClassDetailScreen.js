@@ -196,6 +196,14 @@ export default function ClassDetailScreen({ route, navigation }) {
             <Text style={styles.primaryButtonText}>Enroll Student</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: COLORS.success || '#16a34a', marginTop: 10 }]}
+            onPress={() => navigation.navigate('ManualAttendance', { classData: classInfo })}
+          >
+            <Ionicons name="checkmark-done" size={20} color={COLORS.white} />
+            <Text style={styles.primaryButtonText}>Take Attendance</Text>
+          </TouchableOpacity>
+
           {/* <View style={styles.secondaryButtonsRow}>
             <TouchableOpacity style={styles.secondaryButton} disabled={!isActive}>
               <Ionicons name="qr-code" size={20} color={isActive ? COLORS.primary : COLORS.gray} />
