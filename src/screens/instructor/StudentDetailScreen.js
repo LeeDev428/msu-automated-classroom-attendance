@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,9 @@ export default function StudentDetailScreen({ route, navigation }) {
 
   const [studentData, setStudentData] = useState(initialData);
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [history, setHistory]   = useState([]);
+  const [histLoading, setHistLoading] = useState(false);
   const [form, setForm] = useState({
     student_id:     initialData.student_id     || '',
     first_name:     initialData.first_name     || '',
@@ -42,6 +44,21 @@ export default function StudentDetailScreen({ route, navigation }) {
     .join(' ');
 
   const attendanceRate = studentData.attendance_rate ?? 0;
+
+  // Fetch per-date attendance history
+  useEffect(() => {
+    if (!classData) return;
+    setHistLoading(true);
+    AsyncStorage.getItem('authToken').then(token =>
+      api.get(`/attendance/student_history.php?student_id=${initialData.id}&class_id=${classData.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    ).then(res => {
+      if (res.data.success) setHistory(res.data.records || []);
+    }).catch(err => {
+      console.error('History fetch error:', err);
+    }).finally(() => setHistLoading(false));
+  }, [initialData.id, classData]);
 
   const getAttendanceColor = (rate) => {
     if (rate >= 90) return COLORS.success;
@@ -291,6 +308,45 @@ export default function StudentDetailScreen({ route, navigation }) {
             </View>
           )}
 
+          {/* Attendance History — View Mode */}
+          {!editing && classData && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Attendance History</Text>
+              {histLoading ? (
+                <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 16 }} />
+              ) : history.length === 0 ? (
+                <View style={styles.histEmpty}>
+                  <Ionicons name="calendar-outline" size={36} color={COLORS.gray} />
+                  <Text style={styles.histEmptyText}>No attendance records yet</Text>
+                </View>
+              ) : (
+                history.map((rec, idx) => {
+                  const statusColors = { present: COLORS.success, absent: COLORS.error, late: '#f59e0b', excused: COLORS.info };
+                  const statusIcons  = { present: 'checkmark-circle', absent: 'close-circle', late: 'time', excused: 'information-circle' };
+                  const color = statusColors[rec.status] || COLORS.gray;
+                  const icon  = statusIcons[rec.status]  || 'ellipse';
+                  return (
+                    <View key={idx} style={[
+                      styles.histRow,
+                      idx % 2 === 0 ? styles.histEven : styles.histOdd,
+                    ]}>
+                      <Ionicons name={icon} size={20} color={color} style={{ marginRight: 10 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.histDate}>{rec.date_formatted}</Text>
+                        <Text style={styles.histTime}>{rec.time_in}</Text>
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: color + '20' }]}>
+                        <Text style={[styles.statusBadgeText, { color }]}>
+                          {rec.status.charAt(0).toUpperCase() + rec.status.slice(1)}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          )}
+
           {/* Personal Info — Edit Mode */}
           {editing && (
             <View style={styles.section}>
@@ -537,4 +593,15 @@ const styles = StyleSheet.create({
   qrContainer: { alignItems: 'center', paddingVertical: 16 },
   qrLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center', marginTop: 12 },
   qrSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 4 },
+
+  // Attendance history
+  histRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8, marginBottom: 4 },
+  histEven: { backgroundColor: COLORS.background || '#f8f9fa' },
+  histOdd:  { backgroundColor: '#fff' },
+  histDate: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
+  histTime: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
+  histEmpty: { alignItems: 'center', paddingVertical: 24, opacity: 0.6 },
+  histEmptyText: { fontSize: 14, color: COLORS.gray, marginTop: 8 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
+  statusBadgeText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
 });
