@@ -14,6 +14,7 @@ import ClassDetailScreen from '../screens/instructor/ClassDetailScreen';
 import EnrollStudentScreen from '../screens/instructor/EnrollStudentScreen';
 import StudentDetailScreen from '../screens/instructor/StudentDetailScreen';
 import ClassReportScreen from '../screens/instructor/ClassReportScreen';
+import ManualAttendanceScreen from '../screens/instructor/ManualAttendanceScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -100,6 +101,7 @@ export default function InstructorNavigator() {
       <Stack.Screen name="EnrollStudent" component={EnrollStudentScreen} />
       <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
       <Stack.Screen name="ClassReport" component={ClassReportScreen} />
+      <Stack.Screen name="ManualAttendance" component={ManualAttendanceScreen} />
     </Stack.Navigator>
   );
 }
