@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -11,8 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once '../core/Database.php';
 
-$database = new Database();
-$db = $database->getConnection();
+try {
+    $database = new Database();
+    $db = $database->getConnection();
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'DB connection failed: ' . $e->getMessage()]);
+    exit();
+}
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -37,6 +43,16 @@ try {
     if ($check->rowCount() > 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Email already registered']);
+        exit();
+    }
+
+    // Check if employee_id exists
+    $checkEmp = $db->prepare("SELECT id FROM users WHERE employee_id = ?");
+    $checkEmp->execute([$data->employee_id]);
+
+    if ($checkEmp->rowCount() > 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Employee ID already registered']);
         exit();
     }
     
