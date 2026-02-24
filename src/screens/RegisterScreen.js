@@ -103,24 +103,35 @@ export default function RegisterScreen({ navigation }) {
       console.error('Response Status:', error.response?.status);
       console.error('Response Data:', error.response?.data);
       console.error('Request Config:', error.config?.url);
-      
-      let errorMessage = 'Unable to connect to server.';
-      
-      if (error.response) {
-        // Server responded with error
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-      } else if (error.request) {
-        // Request made but no response
-        errorMessage = 'No response from server. Please check if:\n1. Laragon is running\n2. Apache is started\n3. Backend is deployed';
-      }
-      
+
       const errors = error.response?.data?.errors;
-      
+
       if (errors) {
+        // Validation errors from server
         const errorText = Object.values(errors).join('\n');
         Alert.alert('Validation Error', errorText);
+      } else if (error.response) {
+        // Server responded with an error (4xx/5xx)
+        const errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+        Alert.alert('Registration Failed', errorMessage);
+      } else if (error.request) {
+        // Request was sent but no response received — server may have processed it
+        Alert.alert(
+          'Connection Issue',
+          'The request was sent but we did not receive a response. Your account may have been created successfully.\n\nPlease try logging in. If you cannot login, try registering again.',
+          [
+            {
+              text: 'Try Login',
+              onPress: () => navigation.navigate('Login')
+            },
+            {
+              text: 'Stay Here',
+              style: 'cancel'
+            }
+          ]
+        );
       } else {
-        Alert.alert('Registration Error', errorMessage);
+        Alert.alert('Registration Error', 'Unable to connect to server. Please check your internet connection.');
       }
     } finally {
       setLoading(false);
