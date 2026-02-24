@@ -33,6 +33,7 @@ export default function AddClassScreen({ navigation }) {
 
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const toggleDay = (day) => {
     setClassData(prev => ({
@@ -69,6 +70,13 @@ export default function AddClassScreen({ navigation }) {
       return;
     }
 
+    // Prevent duplicate submissions
+    if (loading) {
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const token = await AsyncStorage.getItem('authToken');
       
@@ -99,11 +107,16 @@ export default function AddClassScreen({ navigation }) {
           }
         ]);
       } else {
+        setLoading(false);
         Alert.alert('Error', response.data.message || 'Failed to create class');
       }
     } catch (error) {
       console.error('Create class error:', error);
-      Alert.alert('Error', 'Failed to create class. Please try again.');
+      setLoading(false);
+      
+      // Show the actual error message from the backend
+      const errorMessage = error.response?.data?.message || 'Failed to create class. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -253,9 +266,13 @@ export default function AddClassScreen({ navigation }) {
           </View>
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSaveClass}>
+          <TouchableOpacity 
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+            onPress={handleSaveClass}
+            disabled={loading}
+          >
             <Ionicons name="checkmark-circle" size={24} color={COLORS.white} />
-            <Text style={styles.saveButtonText}>Save Class</Text>
+            <Text style={styles.saveButtonText}>{loading ? 'Saving...' : 'Save Class'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -401,6 +418,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  saveButtonDisabled: {
+    backgroundColor: COLORS.gray,
+    opacity: 0.6,
   },
   saveButtonText: {
     fontSize: 18,
