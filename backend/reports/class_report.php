@@ -99,6 +99,38 @@ try {
     $studentsStmt->execute([$classId, $classId]);
     $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Build per-day attendance status for each student
+    $sessionDatesStmt = $db->prepare("\n        SELECT DISTINCT DATE(check_in_time) as session_date\n        FROM attendance\n        WHERE class_id = ?\n        ORDER BY session_date DESC\n    ");
+    $sessionDatesStmt->execute([$classId]);
+    $sessionDates = $sessionDatesStmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $attendanceByDayStmt = $db->prepare("\n        SELECT student_id, DATE(check_in_time) as day, status\n        FROM attendance\n        WHERE class_id = ?\n    ");
+    $attendanceByDayStmt->execute([$classId]);
+    $attendanceByDayRows = $attendanceByDayStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $studentDayStatusMap = [];
+    foreach ($attendanceByDayRows as $row) {
+        $sid = (string)$row['student_id'];
+        if (!isset($studentDayStatusMap[$sid])) {
+            $studentDayStatusMap[$sid] = [];
+        }
+        $studentDayStatusMap[$sid][$row['day']] = $row['status'];
+    }
+
+    foreach ($students as &$student) {
+        $sid = (string)$student['id'];
+        $student['day_records'] = [];
+
+        foreach ($sessionDates as $day) {
+            $status = $studentDayStatusMap[$sid][$day] ?? 'absent';
+            $student['day_records'][] = [
+                'date' => $day,
+                'status' => $status,
+            ];
+        }
+    }
+    unset($student);
+
     // Calculate overall rate
     $totalPresent = array_sum(array_column($students, 'present_count'));
     $totalRecords = array_sum(array_column($students, 'total_sessions'));
@@ -113,6 +145,7 @@ try {
             'present_today' => (int)($todayPresent['present'] ?? 0),
             'overall_attendance_rate' => $overallRate,
         ],
+        'session_dates' => $sessionDates,
         'students' => $students,
         'generated_at' => date('Y-m-d H:i:s'),
     ]);
