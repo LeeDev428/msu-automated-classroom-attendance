@@ -81,7 +81,7 @@ try {
                 exit();
             }
             
-            $stmt = $db->prepare("INSERT INTO classes (instructor_id, class_name, class_code, section, description, start_time, end_time, days, room, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO classes (instructor_id, class_name, class_code, section, description, start_time, end_time, days, room, is_active, notify_parents) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $userId,
                 $data->class_name,
@@ -92,7 +92,8 @@ try {
                 $data->end_time,
                 $data->days,
                 $data->room ?? null,
-                $data->is_active ?? 1
+                $data->is_active ?? 1,
+                isset($data->notify_parents) ? ((bool)$data->notify_parents ? 1 : 0) : 1
             ]);
             
             $classId = $db->lastInsertId();
@@ -154,6 +155,10 @@ try {
             if (isset($data->is_active)) {
                 $updates[] = "is_active = ?";
                 $params[] = $data->is_active ? 1 : 0;
+            }
+            if (isset($data->notify_parents)) {
+                $updates[] = "notify_parents = ?";
+                $params[] = $data->notify_parents ? 1 : 0;
             }
             
             if (empty($updates)) {
