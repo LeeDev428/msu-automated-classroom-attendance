@@ -24,6 +24,32 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const handleForgotPassword = async () => {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      Alert.alert('Forgot Password', 'Please type your email first, then tap Forgot Password again.');
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/forgot_password.php', { email: cleanEmail });
+      Alert.alert('Success', response.data.message || 'A temporary password has been sent to your email.');
+    } catch (error) {
+      Alert.alert('Reset Failed', error.response?.data?.message || 'Unable to reset password right now.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     // Validation
     if (!email || !password) {
@@ -31,11 +57,16 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
+    if (!isValidEmail(email.trim())) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await api.post('/auth/login.php', {
-        email,
+        email: email.trim(),
         password
       });
 
@@ -143,7 +174,7 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
 
             {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword} disabled={loading}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
