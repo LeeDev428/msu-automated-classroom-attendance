@@ -152,7 +152,8 @@ export default function ClassesScreen({ navigation }) {
 }
 
 const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
-  const [isActive, setIsActive] = useState(classData.is_active);
+  const [isActive, setIsActive] = useState(Boolean(Number(classData.is_active)));
+  const [notifyParents, setNotifyParents] = useState(Boolean(Number(classData.notify_parents ?? 1)));
   const [updating, setUpdating] = useState(false);
 
   const handleToggleActive = async (value) => {
@@ -171,6 +172,27 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
       console.error('Toggle active error:', error);
       Alert.alert('Error', 'Failed to update class status');
       setIsActive(!value); // Revert on error
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleToggleNotifications = async (value) => {
+    setUpdating(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      await api.put('/classes/index.php', {
+        id: classData.id,
+        notify_parents: value
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifyParents(value);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Toggle notifications error:', error);
+      Alert.alert('Error', 'Failed to update notification setting');
+      setNotifyParents(!value);
     } finally {
       setUpdating(false);
     }
@@ -221,6 +243,30 @@ const ClassCard = ({ classData, onDelete, onRefresh, navigation }) => {
           value={isActive}
           onValueChange={handleToggleActive}
           trackColor={{ false: COLORS.grayLight, true: COLORS.success }}
+          thumbColor={COLORS.white}
+          disabled={updating}
+        />
+      </View>
+
+      <View 
+        style={styles.statusToggleContainer}
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={(e) => e.stopPropagation()}
+      >
+        <View style={styles.statusTextContainer}>
+          <Ionicons 
+            name={notifyParents ? "mail-open" : "mail-unread-outline"}
+            size={18}
+            color={notifyParents ? COLORS.info : COLORS.textSecondary}
+          />
+          <Text style={[styles.statusText, { color: notifyParents ? COLORS.info : COLORS.textSecondary }]}>
+            {notifyParents ? 'Parent notifications on' : 'Parent notifications off'}
+          </Text>
+        </View>
+        <Switch
+          value={notifyParents}
+          onValueChange={handleToggleNotifications}
+          trackColor={{ false: COLORS.grayLight, true: COLORS.info }}
           thumbColor={COLORS.white}
           disabled={updating}
         />
