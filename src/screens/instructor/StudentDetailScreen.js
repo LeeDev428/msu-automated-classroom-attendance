@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,11 +15,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import { COLORS } from '../../constants/colors';
 import api from '../../config/api';
 
 export default function StudentDetailScreen({ route, navigation }) {
   const { studentData: initialData, classData } = route.params;
+  const qrCodeRef = useRef(null);
 
   const [studentData, setStudentData] = useState(initialData);
   const [editing, setEditing] = useState(false);
@@ -31,6 +34,7 @@ export default function StudentDetailScreen({ route, navigation }) {
     first_name:     initialData.first_name     || '',
     middle_initial: initialData.middle_initial || '',
     last_name:      initialData.last_name      || '',
+    program:        initialData.program        || '',
     email:          initialData.email          || '',
     parent_email:   initialData.parent_email   || '',
     parent_name:    initialData.parent_name    || '',
@@ -74,6 +78,7 @@ export default function StudentDetailScreen({ route, navigation }) {
       first_name:     studentData.first_name     || '',
       middle_initial: studentData.middle_initial || '',
       last_name:      studentData.last_name      || '',
+      program:        studentData.program        || '',
       email:          studentData.email          || '',
       parent_email:   studentData.parent_email   || '',
       parent_name:    studentData.parent_name    || '',
@@ -97,6 +102,10 @@ export default function StudentDetailScreen({ route, navigation }) {
       Alert.alert('Validation Error', 'Last Name is required');
       return;
     }
+    if (!form.program.trim()) {
+      Alert.alert('Validation Error', 'Program is required');
+      return;
+    }
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       Alert.alert('Validation Error', 'Please enter a valid email address');
       return;
@@ -115,6 +124,7 @@ export default function StudentDetailScreen({ route, navigation }) {
         first_name:     form.first_name.trim(),
         middle_initial: form.middle_initial.trim(),
         last_name:      form.last_name.trim(),
+        program:        form.program.trim(),
         email:          form.email.trim(),
         parent_email:   form.parent_email.trim(),
         parent_name:    form.parent_name.trim(),
@@ -130,6 +140,7 @@ export default function StudentDetailScreen({ route, navigation }) {
           first_name:     form.first_name.trim(),
           middle_initial: form.middle_initial.trim(),
           last_name:      form.last_name.trim(),
+          program:        form.program.trim(),
           email:          form.email.trim(),
           parent_email:   form.parent_email.trim(),
           parent_name:    form.parent_name.trim(),
@@ -181,6 +192,40 @@ export default function StudentDetailScreen({ route, navigation }) {
       </View>
     </View>
   );
+
+  const handleDownloadQr = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Supported', 'QR download is only available on mobile devices.');
+      return;
+    }
+
+    if (!qrCodeRef.current || !qrCodeRef.current.toDataURL) {
+      Alert.alert('Error', 'QR code is not ready yet. Please try again.');
+      return;
+    }
+
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission Needed', 'Please allow media library access to save the QR code.');
+        return;
+      }
+
+      qrCodeRef.current.toDataURL(async (base64Data) => {
+        const fileUri = `${FileSystem.cacheDirectory}qr-${studentData.student_id}.png`;
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+        await MediaLibrary.createAlbumAsync('MSU Attendance QR', asset, false).catch(() => null);
+        Alert.alert('Saved', 'Student QR code has been saved to your gallery.');
+      });
+    } catch (error) {
+      console.error('Download QR error:', error);
+      Alert.alert('Error', 'Failed to save QR code. Please try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -297,6 +342,7 @@ export default function StudentDetailScreen({ route, navigation }) {
               <Text style={styles.sectionTitle}>Personal Information</Text>
               <InfoRow icon="id-card-outline" label="Student ID"    value={studentData.student_id} />
               <InfoRow icon="person-outline"  label="Full Name"     value={fullName} />
+              <InfoRow icon="school-outline" label="Program" value={studentData.program} />
               <InfoRow icon="mail-outline"    label="Email"         value={studentData.email} />
               <InfoRow icon="person-circle-outline" label="Parent/Guardian" value={studentData.parent_name} />
               <InfoRow icon="mail-open-outline" label="Parent Email" value={studentData.parent_email} />
@@ -311,14 +357,21 @@ export default function StudentDetailScreen({ route, navigation }) {
               <Text style={styles.qrHint}>Instructor scans this to mark attendance</Text>
               <View style={styles.qrContainer}>
                 <QRCode
-                  value={`${studentData.id}|${classData.id}|${fullName}`}
+                  value={`${studentData.id}|${studentData.student_id}|${fullName}`}
                   size={200}
                   color={COLORS.textPrimary}
                   backgroundColor={COLORS.white}
+                  getRef={(ref) => {
+                    qrCodeRef.current = ref;
+                  }}
                 />
               </View>
               <Text style={styles.qrLabel}>{fullName}</Text>
-              <Text style={styles.qrSub}>{classData.class_name}{classData.section ? ` — ${classData.section}` : ''}</Text>
+              <Text style={styles.qrSub}>Reusable in all classes for this student</Text>
+              <TouchableOpacity style={styles.downloadQrButton} onPress={handleDownloadQr}>
+                <Ionicons name="download-outline" size={18} color={COLORS.white} />
+                <Text style={styles.downloadQrButtonText}>Download QR</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -419,6 +472,12 @@ export default function StudentDetailScreen({ route, navigation }) {
                 placeholder="student@example.com (optional)"
                 keyboardType="email-address"
                 autoCapitalize="none"
+              />
+              <EditField
+                icon="school-outline"
+                label="Program *"
+                field="program"
+                placeholder="e.g. BS Computer Science"
               />
               <EditField
                 icon="person-circle-outline"
@@ -621,6 +680,22 @@ const styles = StyleSheet.create({
   qrContainer: { alignItems: 'center', paddingVertical: 16 },
   qrLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center', marginTop: 12 },
   qrSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 4 },
+  downloadQrButton: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  downloadQrButtonText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
 
   // Attendance history
   histRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8, marginBottom: 4 },
