@@ -45,6 +45,8 @@ $firstName     = trim($data->first_name     ?? '');
 $middleInitial = trim($data->middle_initial ?? '');
 $lastName      = trim($data->last_name      ?? '');
 $email         = trim($data->email          ?? '');
+$parentEmail   = trim($data->parent_email   ?? '');
+$parentName    = trim($data->parent_name    ?? '');
 $phone         = trim($data->phone          ?? '');
 
 if (!$studentDbId || !$studentNumber || !$firstName || !$lastName) {
@@ -90,9 +92,16 @@ try {
         }
     }
 
+    if (!empty($parentEmail) && !filter_var($parentEmail, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid parent email format']);
+        exit();
+    }
+
     $updateStmt = $db->prepare("
         UPDATE students
         SET student_id = ?, first_name = ?, middle_initial = ?, last_name = ?, email = ?, phone = ?
+        , parent_email = ?, parent_name = ?
         WHERE id = ?
     ");
     $updateStmt->execute([
@@ -101,6 +110,8 @@ try {
         !empty($middleInitial) ? $middleInitial : null,
         $lastName,
         !empty($email) ? $email : null,
+        !empty($parentEmail) ? $parentEmail : null,
+        !empty($parentName) ? $parentName : null,
         !empty($phone) ? $phone : null,
         $studentDbId,
     ]);
