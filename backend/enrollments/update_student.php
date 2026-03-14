@@ -44,14 +44,15 @@ $studentNumber = trim($data->student_id     ?? '');
 $firstName     = trim($data->first_name     ?? '');
 $middleInitial = trim($data->middle_initial ?? '');
 $lastName      = trim($data->last_name      ?? '');
+$program       = trim($data->program        ?? '');
 $email         = trim($data->email          ?? '');
 $parentEmail   = trim($data->parent_email   ?? '');
 $parentName    = trim($data->parent_name    ?? '');
 $phone         = trim($data->phone          ?? '');
 
-if (!$studentDbId || !$studentNumber || !$firstName || !$lastName) {
+if (!$studentDbId || !$studentNumber || !$firstName || !$lastName || !$program) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'id, student_id, first_name, and last_name are required']);
+    echo json_encode(['success' => false, 'message' => 'id, student_id, first_name, last_name, and program are required']);
     exit();
 }
 
@@ -92,12 +93,13 @@ try {
         exit();
     }
 
-    $updateStmt = $db->prepare("\n        UPDATE students\n        SET student_id = ?, first_name = ?, middle_initial = ?, last_name = ?, email = ?, parent_email = ?, parent_name = ?, phone = ?\n        WHERE id = ?\n    ");
+    $updateStmt = $db->prepare("\n        UPDATE students\n        SET student_id = ?, first_name = ?, middle_initial = ?, last_name = ?, program = ?, email = ?, parent_email = ?, parent_name = ?, phone = ?\n        WHERE id = ?\n    ");
     $updateStmt->execute([
         $studentNumber,
         $firstName,
         !empty($middleInitial) ? $middleInitial : null,
         $lastName,
+        $program,
         !empty($email) ? $email : null,
         !empty($parentEmail) ? $parentEmail : null,
         !empty($parentName) ? $parentName : null,
