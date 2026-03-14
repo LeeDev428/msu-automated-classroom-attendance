@@ -12,6 +12,7 @@ header("Content-Type: application/json");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
 
 require_once '../core/Database.php';
+require_once '../core/NotificationService.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -43,9 +44,10 @@ $validStatuses = ['present', 'absent', 'late', 'excused'];
 
 try {
     // Verify the class belongs to this instructor
-    $chk = $db->prepare("SELECT id FROM classes WHERE id = ? AND instructor_id = ?");
+    $chk = $db->prepare("SELECT id, class_name, notify_parents FROM classes WHERE id = ? AND instructor_id = ?");
     $chk->execute([$classId, $userId]);
-    if (!$chk->fetch()) {
+    $class = $chk->fetch(PDO::FETCH_ASSOC);
+    if (!$class) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Access denied']); exit();
     }
@@ -53,6 +55,14 @@ try {
     $db->beginTransaction();
 
     $saved = 0;
+    $notificationsSent = 0;
+    $notifier = null;
+    $notifyEnabled = ((int)($class['notify_parents'] ?? 1) === 1);
+
+    if ($notifyEnabled) {
+        $notifier = new NotificationService();
+    }
+
     foreach ($records as $rec) {
         $studentId = (int)($rec['studentId'] ?? 0);
         $status    = $rec['status'] ?? 'absent';
@@ -82,6 +92,33 @@ try {
             $ins->execute([$studentId, $classId, $checkInTime, $status]);
         }
         $saved++;
+
+        // Send parent email only for positive attendance statuses
+        if ($notifyEnabled && in_array($status, ['present', 'late'], true)) {
+            $studentStmt = $db->prepare("\n                SELECT parent_email, parent_name, first_name, middle_initial, last_name\n                FROM students\n                WHERE id = ?\n                LIMIT 1\n            ");
+            $studentStmt->execute([$studentId]);
+            $student = $studentStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!empty($student['parent_email'])) {
+                $nameParts = array_filter([
+                    $student['first_name'] ?? null,
+                    !empty($student['middle_initial']) ? $student['middle_initial'] . '.' : null,
+                    $student['last_name'] ?? null,
+                ]);
+                $fullName = implode(' ', $nameParts);
+
+                if ($notifier && $notifier->sendAttendanceEmail(
+                    $student['parent_email'],
+                    $student['parent_name'] ?? '',
+                    $fullName,
+                    $class['class_name'] ?? 'Class',
+                    $status,
+                    $date . ' ' . date('H:i:s')
+                )) {
+                    $notificationsSent++;
+                }
+            }
+        }
     }
 
     $db->commit();
@@ -90,6 +127,7 @@ try {
         'success' => true,
         'message' => "Attendance saved for {$saved} student(s).",
         'saved'   => $saved,
+        'parent_notifications_sent' => $notificationsSent,
     ]);
 } catch (Exception $e) {
     if ($db->inTransaction()) $db->rollBack();
