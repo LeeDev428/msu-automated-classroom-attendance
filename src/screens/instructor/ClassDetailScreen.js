@@ -22,7 +22,7 @@ export default function ClassDetailScreen({ route, navigation }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isActive, setIsActive] = useState(classData.is_active);
+  const [isActive, setIsActive] = useState(Boolean(Number(classData.is_active)));
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -197,8 +197,19 @@ export default function ClassDetailScreen({ route, navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: COLORS.success || '#16a34a', marginTop: 10 }]}
-            onPress={() => navigation.navigate('ManualAttendance', { classData: classInfo })}
+            style={[
+              styles.primaryButton,
+              { backgroundColor: COLORS.success || '#16a34a', marginTop: 10 },
+              !isActive && { opacity: 0.6 }
+            ]}
+            onPress={() => {
+              if (!isActive) {
+                Alert.alert('Class Inactive', 'Activate this class first before taking attendance.');
+                return;
+              }
+              navigation.navigate('ManualAttendance', { classData: classInfo });
+            }}
+            disabled={!isActive}
           >
             <Ionicons name="checkmark-done" size={20} color={COLORS.white} />
             <Text style={styles.primaryButtonText}>Take Attendance</Text>
