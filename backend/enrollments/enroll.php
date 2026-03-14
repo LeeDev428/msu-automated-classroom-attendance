@@ -25,33 +25,6 @@ $db = $database->getConnection();
 $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? '') : '');
 $token = str_replace('Bearer ', '', $authHeader);
 
-<?php
-/**
- * Enroll Student in a Class
- * Endpoint: POST /enrollments/enroll.php
- */
-
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../core/Database.php';
-require_once '../core/Response.php';
-require_once '../core/Validator.php';
-
-$database = new Database();
-$db = $database->getConnection();
-
-// Get user ID from token
-$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? '') : '');
-$token = str_replace('Bearer ', '', $authHeader);
-
 if (empty($token)) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'No token provided']);
@@ -127,7 +100,7 @@ try {
         ]);
     } else {
         // Create new student record
-        $insertStudent = $db->prepare("\n            INSERT INTO students (student_id, first_name, middle_initial, last_name, email, parent_email, parent_name, phone, created_at) \n            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())\n        ");
+        $insertStudent = $db->prepare("\n            INSERT INTO students (student_id, first_name, middle_initial, last_name, email, parent_email, parent_name, phone, created_at)\n            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())\n        ");
         $insertStudent->execute([
             $data->student_id,
             $data->first_name,
@@ -142,7 +115,7 @@ try {
     }
 
     // Enroll student in class
-    $enrollStmt = $db->prepare("\n        INSERT INTO enrollments (student_id, class_id, enrolled_date, status) \n        VALUES (?, ?, NOW(), 'active')\n    ");
+    $enrollStmt = $db->prepare("\n        INSERT INTO enrollments (student_id, class_id, enrolled_date, status)\n        VALUES (?, ?, NOW(), 'active')\n    ");
     $enrollStmt->execute([$studentDbId, $data->class_id]);
 
     // Get the complete student record
