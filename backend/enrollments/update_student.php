@@ -100,6 +100,10 @@ try {
 
     $updateStmt = $db->prepare("
         UPDATE students
+        SET student_id = ?, first_name = ?, middle_initial = ?, last_name = ?, email = ?, parent_email = ?, parent_name = ?, phone = ?
+        WHERE id = ?
+    ");
+        UPDATE students
         SET student_id = ?, first_name = ?, middle_initial = ?, last_name = ?, email = ?, phone = ?
         , parent_email = ?, parent_name = ?
         WHERE id = ?
