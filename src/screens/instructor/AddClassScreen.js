@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Switch,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,7 @@ export default function AddClassScreen({ navigation }) {
     end_time: new Date(),
     days: [],
     room: '',
+    notify_parents: true,
   });
 
   const [showStartPicker, setShowStartPicker] = useState(false);
@@ -93,6 +95,7 @@ export default function AddClassScreen({ navigation }) {
         days: classData.days.join(', '),
         room: classData.room,
         is_active: true, // New classes are active by default
+        notify_parents: classData.notify_parents,
       };
 
       const response = await api.post('/classes/index.php', payload, {
@@ -265,6 +268,19 @@ export default function AddClassScreen({ navigation }) {
             />
           </View>
 
+          <View style={styles.toggleCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toggleTitle}>Parent Email Notifications</Text>
+              <Text style={styles.toggleSubtitle}>Send parent emails when attendance is recorded</Text>
+            </View>
+            <Switch
+              value={classData.notify_parents}
+              onValueChange={(value) => setClassData({ ...classData, notify_parents: value })}
+              trackColor={{ false: COLORS.grayLight, true: COLORS.success }}
+              thumbColor={COLORS.white}
+            />
+          </View>
+
           {/* Save Button */}
           <TouchableOpacity 
             style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
@@ -357,6 +373,28 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  toggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 18,
+    backgroundColor: COLORS.white,
+  },
+  toggleTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  toggleSubtitle: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   textArea: {
     height: 100,
