@@ -52,6 +52,11 @@ export default function ClassReportScreen({ route, navigation }) {
     return COLORS.error;
   };
 
+  const formatDateShort = (isoDate) => {
+    const d = new Date(`${isoDate}T00:00:00`);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   const RateBar = ({ rate }) => (
     <View style={styles.rateBarBg}>
       <View
@@ -155,6 +160,14 @@ export default function ClassReportScreen({ route, navigation }) {
                   .filter(Boolean)
                   .join(' ');
 
+                const presentDays = (student.day_records || [])
+                  .filter((rec) => rec.status === 'present' || rec.status === 'late')
+                  .map((rec) => formatDateShort(rec.date));
+
+                const absentDays = (student.day_records || [])
+                  .filter((rec) => rec.status === 'absent')
+                  .map((rec) => formatDateShort(rec.date));
+
                 return (
                   <View
                     key={student.id}
@@ -169,6 +182,12 @@ export default function ClassReportScreen({ route, navigation }) {
                       </Text>
                       <Text style={styles.studentId}>{student.student_id}</Text>
                       <RateBar rate={rate} />
+                      <Text style={styles.dayStatusText}>
+                        Present: {presentDays.length > 0 ? presentDays.join(', ') : 'None'}
+                      </Text>
+                      <Text style={styles.dayStatusText}>
+                        Absent: {absentDays.length > 0 ? absentDays.join(', ') : 'None'}
+                      </Text>
                     </View>
                     <Text style={[styles.tableCell, { flex: 1, color: COLORS.success }]}>
                       {student.present_count}
@@ -340,6 +359,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textSecondary,
     marginBottom: 4,
+  },
+  dayStatusText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 3,
+    lineHeight: 15,
   },
   rateBarBg: {
     width: '90%',
