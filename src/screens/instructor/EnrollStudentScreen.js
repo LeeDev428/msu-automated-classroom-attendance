@@ -27,6 +27,7 @@ export default function EnrollStudentScreen({ route, navigation }) {
     last_name: '',
     email: '',
     parent_name: '',
+    parent_email: '',
     mobile_number: '',
   });
 
@@ -52,6 +53,10 @@ export default function EnrollStudentScreen({ route, navigation }) {
       Alert.alert('Validation Error', 'Please enter a valid email address');
       return;
     }
+    if (studentData.parent_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentData.parent_email.trim())) {
+      Alert.alert('Validation Error', 'Please enter a valid parent email address');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -65,6 +70,7 @@ export default function EnrollStudentScreen({ route, navigation }) {
         last_name: studentData.last_name.trim(),
         email: studentData.email.trim(),
         parent_name: studentData.parent_name.trim(),
+        parent_email: studentData.parent_email.trim(),
         mobile_number: studentData.mobile_number.trim(),
       };
 
@@ -201,6 +207,16 @@ export default function EnrollStudentScreen({ route, navigation }) {
             value={studentData.parent_name}
             onChangeText={(text) => setStudentData({ ...studentData, parent_name: text })}
             autoCapitalize="words"
+          />
+
+          <Text style={styles.label}>Parent/Guardian Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="parent@example.com"
+            value={studentData.parent_email}
+            onChangeText={(text) => setStudentData({ ...studentData, parent_email: text })}
+            autoCapitalize="none"
+            keyboardType="email-address"
           />
 
           <Text style={styles.label}>Mobile Number *</Text>
