@@ -67,13 +67,34 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const requestUrl = `${error.config?.baseURL || api.defaults.baseURL || ''}${error.config?.url || ''}`;
+
     if (error.response) {
-      // Server responded with error status
-      console.error('API Error:', error.response.data);
+      // Server responded with an error status code
+      console.error('API Error Details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        url: requestUrl,
+        method: error.config?.method,
+        responseData: error.response.data,
+      });
     } else if (error.request) {
-      // Request made but no response
-      console.error('Network Error:', error.message);
+      // Request sent but no response received
+      console.error('Network Error Details:', {
+        code: error.code,
+        message: error.message,
+        url: requestUrl,
+        method: error.config?.method,
+        timeoutMs: error.config?.timeout,
+      });
+    } else {
+      // Request setup issue before sending
+      console.error('Request Setup Error:', {
+        message: error.message,
+        url: requestUrl,
+      });
     }
+
     return Promise.reject(error);
   }
 );
