@@ -11,18 +11,28 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
-import api from '../config/api';
+import api, { getApiBaseUrl, setApiBaseUrl } from '../config/api';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [serverUrl, setServerUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    const loadServerUrl = async () => {
+      const current = await getApiBaseUrl();
+      setServerUrl(current);
+    };
+    loadServerUrl();
+  }, []);
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -41,6 +51,7 @@ export default function LoginScreen({ navigation }) {
 
     setLoading(true);
     try {
+      await setApiBaseUrl(serverUrl);
       const response = await api.post('/auth/forgot_password.php', { email: cleanEmail });
       Alert.alert('Success', response.data.message || 'A temporary password has been sent to your email.');
     } catch (error) {
@@ -65,6 +76,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
+      await setApiBaseUrl(serverUrl);
       const response = await api.post('/auth/login.php', {
         email: email.trim(),
         password
@@ -158,6 +170,24 @@ export default function LoginScreen({ navigation }) {
                   />
                 </TouchableOpacity>
               </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Backend Server URL *</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="server-outline" size={20} color={COLORS.gray} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="http://192.168.x.x:8000/"
+                  value={serverUrl}
+                  onChangeText={setServerUrl}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              <TouchableOpacity onPress={() => Linking.openURL(serverUrl || 'http://localhost:8000/index.php')}>
+                <Text style={styles.serverHint}>Tap to open this backend URL in browser</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Login Button */}
@@ -289,6 +319,12 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
+  },
+  serverHint: {
+    marginTop: 6,
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '500',
   },
   loginButton: {
     backgroundColor: COLORS.primary,
