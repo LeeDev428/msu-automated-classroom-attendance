@@ -26,6 +26,37 @@ export default function LoginScreen({ navigation }) {
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
+  const buildErrorDetails = (error, actionName) => {
+    const baseURL = error?.config?.baseURL || api.defaults.baseURL || 'Unknown base URL';
+    const endpoint = error?.config?.url || 'Unknown endpoint';
+    const fullUrl = `${baseURL}${endpoint}`;
+
+    if (error?.response) {
+      const message = error.response?.data?.message || `Server returned ${error.response.status}`;
+      return {
+        title: `${actionName} Failed`,
+        userMessage: `${message}\n\nURL: ${fullUrl}\nStatus: ${error.response.status}`,
+      };
+    }
+
+    if (error?.request) {
+      return {
+        title: `${actionName} Failed`,
+        userMessage:
+          `No response from backend server.\n\n` +
+          `URL: ${fullUrl}\n` +
+          `Code: ${error.code || 'N/A'}\n` +
+          `Timeout: ${error?.config?.timeout || 'N/A'} ms\n\n` +
+          `Check if PHP server is running and phone can open this URL in browser.`,
+      };
+    }
+
+    return {
+      title: `${actionName} Failed`,
+      userMessage: error?.message || 'Unexpected request error.',
+    };
+  };
+
   const handleForgotPassword = async () => {
     const cleanEmail = email.trim();
 
@@ -44,7 +75,16 @@ export default function LoginScreen({ navigation }) {
       const response = await api.post('/auth/forgot_password.php', { email: cleanEmail });
       Alert.alert('Success', response.data.message || 'A temporary password has been sent to your email.');
     } catch (error) {
-      Alert.alert('Reset Failed', error.response?.data?.message || 'Unable to reset password right now.');
+      const details = buildErrorDetails(error, 'Reset Password');
+      Alert.alert(details.title, details.userMessage);
+      console.error('Reset password error details:', {
+        code: error?.code,
+        message: error?.message,
+        baseURL: error?.config?.baseURL || api.defaults.baseURL,
+        endpoint: error?.config?.url,
+        status: error?.response?.status,
+        response: error?.response?.data,
+      });
     } finally {
       setLoading(false);
     }
@@ -81,9 +121,16 @@ export default function LoginScreen({ navigation }) {
         Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Unable to connect to server. Please check if backend is running.';
-      Alert.alert('Login Error', errorMessage);
-      console.error('Login error:', error.response?.data || error);
+      const details = buildErrorDetails(error, 'Login');
+      Alert.alert(details.title, details.userMessage);
+      console.error('Login error details:', {
+        code: error?.code,
+        message: error?.message,
+        baseURL: error?.config?.baseURL || api.defaults.baseURL,
+        endpoint: error?.config?.url,
+        status: error?.response?.status,
+        response: error?.response?.data,
+      });
     } finally {
       setLoading(false);
     }
