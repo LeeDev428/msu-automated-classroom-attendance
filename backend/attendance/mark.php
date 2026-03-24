@@ -10,7 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../core/Database.php';
-require_once '../core/NotificationService.php';
+
+$notificationServiceAvailable =
+    file_exists(__DIR__ . '/../core/NotificationService.php') &&
+    file_exists(__DIR__ . '/../vendor/autoload.php');
+if ($notificationServiceAvailable) {
+    require_once '../core/NotificationService.php';
+}
 
 $database = new Database();
 $db = $database->getConnection();
@@ -86,7 +92,7 @@ try {
         $contactStmt->execute([$studentDbId]);
         $contact = $contactStmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!empty($contact['parent_email'])) {
+        if (!empty($contact['parent_email']) && $notificationServiceAvailable && class_exists('NotificationService')) {
             $notifier = new NotificationService();
             $notificationSent = $notifier->sendAttendanceEmail(
                 $contact['parent_email'],
