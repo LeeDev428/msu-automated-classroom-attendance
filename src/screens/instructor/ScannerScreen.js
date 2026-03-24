@@ -119,16 +119,41 @@ function NativeScanner({ scanned, setScanned, paused, setPaused }) {
       return;
     }
 
-    const parts = data.split('|');
-    if (parts.length < 2) {
-      Alert.alert('Invalid QR Code', 'Please scan a valid student attendance QR code.', [
+    let studentDbId = null;
+    let studentName = '';
+
+    try {
+      if (typeof data === 'string' && data.trim().startsWith('{')) {
+        const jsonPayload = JSON.parse(data);
+        studentDbId = jsonPayload.studentId || jsonPayload.id || null;
+        studentName = (jsonPayload.name || '').trim();
+      } else {
+        const parts = String(data).split('|');
+        if (parts.length < 2) {
+          Alert.alert('Invalid QR Code', 'Please scan a valid student attendance QR code.', [
+            { text: 'OK', onPress: () => setScanned(false) },
+          ]);
+          return;
+        }
+
+        studentDbId = parts[0];
+        const nameParts = parts.slice(2);
+        studentName = (nameParts.join(' ') || parts.slice(1).join(' ')).trim();
+      }
+    } catch (_) {
+      Alert.alert('Invalid QR Code', 'Unable to read this QR format.', [
         { text: 'OK', onPress: () => setScanned(false) },
       ]);
       return;
     }
 
-    const [studentDbId, , ...nameParts] = parts;
-    const studentName = (nameParts.join(' ') || parts.slice(1).join(' ')).trim();
+    const cleanStudentDbId = Number(String(studentDbId).trim());
+    if (!Number.isInteger(cleanStudentDbId) || cleanStudentDbId <= 0) {
+      Alert.alert('Invalid QR Code', 'Student identifier is missing or invalid.', [
+        { text: 'OK', onPress: () => setScanned(false) },
+      ]);
+      return;
+    }
 
     Alert.alert(
       'Confirm Attendance',
@@ -144,7 +169,7 @@ function NativeScanner({ scanned, setScanned, paused, setPaused }) {
           onPress: async () => {
             try {
               const response = await api.post('/attendance/mark.php', {
-                studentId: studentDbId,
+                studentId: cleanStudentDbId,
                 classId: selectedClassId,
               });
               if (response.data.success) {
